@@ -58,12 +58,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const telegram = new Telegram(cfg.config.telegramToken)
-  waitUntil(
-    handleIncoming(incoming, cfg.config, telegram).catch(async (e) => {
-      log('error', 'pipeline_failed', {updateId: incoming.updateId, senderId: incoming.senderId, ...errInfo(e)})
-      await telegram.sendMessage(incoming.chatId, M[pickLang(incoming.languageCode)].bareError)
-    }),
-  )
+  const failLoudly = async (e: unknown) => {
+    log('error', 'pipeline_failed', {updateId: incoming.updateId, senderId: incoming.senderId, ...errInfo(e)})
+    await telegram.sendMessage(incoming.chatId, M[pickLang(incoming.languageCode)].bareError)
+  }
+
+  // ➕ / ❌ must complete BEFORE the 200: they are quick, and the very next
+  // message from the sender must find the session already open (or closed) —
+  // otherwise a fast sender's first content message races past the session.
+  const quickAction = detectAction(incoming.text)
+  if (quickAction === 'add' || quickAction === 'cancel') {
+    await handleIncoming(incoming, cfg.config, telegram).catch(failLoudly)
+    res.status(200).json({ok: true})
+    return
+  }
+
+  waitUntil(handleIncoming(incoming, cfg.config, telegram).catch(failLoudly))
   res.status(200).json({ok: true})
 }
 
