@@ -17,6 +17,7 @@ export type Messages = {
   usage: string
   greeting: (name: string) => string
   noCaption: string
+  notAListing: string
   working: string
   btnAdd: string
   btnSubmit: string
@@ -60,6 +61,8 @@ export const M: Record<Lang, Messages> = {
       "Tip: send images as files for full quality. I will create a draft for review — nothing goes live automatically.",
     greeting: (name) => `Hi ${name}! `,
     noCaption: "Please include the listing description as the caption of the photos, then send again.",
+    notAListing:
+      "This doesn't look like a property listing. Please send the property description — type, location, area, price.",
     working: "✅ Got it — processing your listing. This takes about half a minute…",
     btnAdd: "➕ Add property",
     btnSubmit: "✅ Submit",
@@ -104,6 +107,8 @@ export const M: Record<Lang, Messages> = {
       "Порада: надсилайте зображення файлами для повної якості. Я створю чернетку на перевірку — нічого не публікується автоматично.",
     greeting: (name) => `Вітаю, ${name}! `,
     noCaption: "Будь ласка, додайте опис оголошення в підпис до фотографій і надішліть знову.",
+    notAListing:
+      "Це не схоже на оголошення про нерухомість. Надішліть, будь ласка, опис обʼєкта — тип, розташування, площа, ціна.",
     working: "✅ Прийнято — обробляю ваше оголошення. Це займе близько пів хвилини…",
     btnAdd: "➕ Додати обʼєкт",
     btnSubmit: "✅ Надіслати",
@@ -148,6 +153,8 @@ export const M: Record<Lang, Messages> = {
       "Совет: отправляйте изображения файлами для полного качества. Я создам черновик на проверку — ничего не публикуется автоматически.",
     greeting: (name) => `Здравствуйте, ${name}! `,
     noCaption: "Пожалуйста, добавьте описание объявления в подпись к фотографиям и отправьте снова.",
+    notAListing:
+      "Это не похоже на объявление о недвижимости. Отправьте, пожалуйста, описание объекта — тип, расположение, площадь, цена.",
     working: "✅ Принято — обрабатываю ваше объявление. Это займёт около полминуты…",
     btnAdd: "➕ Добавить объект",
     btnSubmit: "✅ Отправить",
@@ -192,6 +199,8 @@ export const M: Record<Lang, Messages> = {
       "Këshillë: dërgojini imazhet si skedarë për cilësi të plotë. Do të krijoj një draft për shqyrtim — asgjë nuk publikohet automatikisht.",
     greeting: (name) => `Përshëndetje, ${name}! `,
     noCaption: "Ju lutem shtoni përshkrimin e njoftimit si tekst te fotot dhe dërgoni përsëri.",
+    notAListing:
+      "Kjo nuk duket si njoftim prone. Ju lutem dërgoni përshkrimin e pronës — lloji, vendndodhja, sipërfaqja, çmimi.",
     working: "✅ E mora — po e përpunoj njoftimin tuaj. Kjo zgjat rreth gjysmë minute…",
     btnAdd: "➕ Shto pronë",
     btnSubmit: "✅ Dërgo",
@@ -236,6 +245,8 @@ export const M: Record<Lang, Messages> = {
       "Consiglio: invia le immagini come file per la massima qualità. Creerò una bozza da revisionare — nulla va online automaticamente.",
     greeting: (name) => `Ciao ${name}! `,
     noCaption: "Aggiungi la descrizione dell'annuncio come didascalia delle foto e invia di nuovo.",
+    notAListing:
+      "Questo non sembra un annuncio immobiliare. Invia una descrizione dell'immobile — tipo, posizione, superficie, prezzo.",
     working: "✅ Ricevuto — sto elaborando il tuo annuncio. Ci vorrà circa mezzo minuto…",
     btnAdd: "➕ Aggiungi immobile",
     btnSubmit: "✅ Invia",

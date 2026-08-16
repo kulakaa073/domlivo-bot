@@ -10,6 +10,7 @@ import {buildDraft} from './buildDraft.js'
 import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
 import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
+import {screenCaption} from './guard.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
@@ -55,6 +56,15 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
 
   if (!caption) {
     await deps.telegram.sendMessage(chatId, t.noCaption)
+    return
+  }
+
+  // Mechanical guard: trash and injection attempts never reach the model.
+  // Generic user message on purpose — the reason is only in the logs.
+  const verdict = screenCaption(caption)
+  if (!verdict.ok) {
+    log('warn', 'guard_rejected', {senderId, reason: verdict.reason, captionLength: caption.length})
+    await deps.telegram.sendMessage(chatId, t.notAListing)
     return
   }
 
