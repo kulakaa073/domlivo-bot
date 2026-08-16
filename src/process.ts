@@ -32,12 +32,12 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
 
   const auth = await resolveAgent(deps.sanity, senderId)
   if (auth.kind === 'disabled') {
-    log('warn', 'refused_disabled', {senderId})
+    log('warn', 'refused_disabled', {senderId, username: first.username})
     await deps.telegram.sendMessage(chatId, DISABLED)
     return
   }
   if (auth.kind === 'unknown') {
-    log('warn', 'refused_unknown_sender', {senderId})
+    log('warn', 'refused_unknown_sender', {senderId, username: first.username})
     await deps.telegram.sendMessage(chatId, REFUSAL)
     return
   }

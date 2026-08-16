@@ -74,6 +74,8 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
 
   if (incoming.command === '/start') {
     const auth = await resolveAgent(sanity, incoming.senderId)
+    // Username is logged for onboarding (mapping ids to known people), never used for auth.
+    log('info', 'start_command', {senderId: incoming.senderId, username: incoming.username, auth: auth.kind})
     const msg =
       auth.kind === 'ok' ? `Hi ${auth.agentName}! ${USAGE}` : auth.kind === 'disabled' ? DISABLED : REFUSAL
     await telegram.sendMessage(incoming.chatId, msg)
@@ -95,6 +97,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     text: incoming.text,
     senderId: incoming.senderId,
     chatId: incoming.chatId,
+    username: incoming.username,
   }
 
   if (incoming.mediaGroupId) {

@@ -11,6 +11,7 @@ export type GroupItem = {
   text: string | null
   senderId: number
   chatId: number
+  username: string | null
 }
 
 const TTL = 3600

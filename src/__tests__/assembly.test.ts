@@ -34,6 +34,7 @@ const item = (n: number): GroupItem => ({
   text: n === 1 ? 'caption on first item' : null,
   senderId: 111,
   chatId: 111,
+  username: null,
 })
 
 describe('dedupe', () => {

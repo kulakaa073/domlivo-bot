@@ -16,6 +16,8 @@ export type Incoming = {
   updateId: number
   chatId: number
   senderId: number
+  /** Telegram @username if the account has one — used for onboarding logs only, never for auth. */
+  username: string | null
   mediaGroupId: string | null
   /** caption (media) or text (plain message) */
   text: string | null
@@ -43,6 +45,7 @@ export function extractIncoming(update: TgUpdate): Incoming | null {
     updateId: update.update_id,
     chatId: m.chat.id,
     senderId: m.from.id,
+    username: m.from.username ?? null,
     mediaGroupId: m.media_group_id ?? null,
     text,
     photoFileId,
