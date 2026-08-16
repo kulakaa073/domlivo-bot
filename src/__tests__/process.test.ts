@@ -53,13 +53,15 @@ const items: GroupItem[] = [
 ]
 
 describe('processMessage', () => {
-  it('creates a draft and replies with the studio link', async () => {
+  it('acknowledges immediately, then creates a draft and replies with the studio link', async () => {
     const {d, created, sent} = deps()
     await processMessage(items, d)
     expect(created.length).toBe(1)
     expect(String(created[0]!._id)).toMatch(/^drafts\.property-tg-/)
-    expect(sent[0]).toContain('Draft created')
-    expect(sent[0]).toContain('intent/edit')
+    expect(sent.length).toBe(2)
+    expect(sent[0]).toContain('processing your listing')
+    expect(sent[1]).toContain('Draft created')
+    expect(sent[1]).toContain('intent/edit')
   })
 
   it('refuses unknown senders without writing anything', async () => {

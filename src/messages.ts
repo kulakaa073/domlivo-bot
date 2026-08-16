@@ -17,6 +17,7 @@ export type Messages = {
   usage: string
   greeting: (name: string) => string
   noCaption: string
+  working: string
   draftCreated: string
   missingLabel: string
   notMatched: string
@@ -52,6 +53,7 @@ export const M: Record<Lang, Messages> = {
       "Tip: send images as files for full quality. I will create a draft for review — nothing goes live automatically.",
     greeting: (name) => `Hi ${name}! `,
     noCaption: "Please include the listing description as the caption of the photos, then send again.",
+    working: "✅ Got it — processing your listing. This takes about half a minute…",
     draftCreated: "Draft created",
     missingLabel: "Missing",
     notMatched: "Not matched (left empty)",
@@ -86,6 +88,7 @@ export const M: Record<Lang, Messages> = {
       "Порада: надсилайте зображення файлами для повної якості. Я створю чернетку на перевірку — нічого не публікується автоматично.",
     greeting: (name) => `Вітаю, ${name}! `,
     noCaption: "Будь ласка, додайте опис оголошення в підпис до фотографій і надішліть знову.",
+    working: "✅ Прийнято — обробляю ваше оголошення. Це займе близько пів хвилини…",
     draftCreated: "Чернетку створено",
     missingLabel: "Бракує",
     notMatched: "Не розпізнано (залишено порожнім)",
@@ -120,6 +123,7 @@ export const M: Record<Lang, Messages> = {
       "Совет: отправляйте изображения файлами для полного качества. Я создам черновик на проверку — ничего не публикуется автоматически.",
     greeting: (name) => `Здравствуйте, ${name}! `,
     noCaption: "Пожалуйста, добавьте описание объявления в подпись к фотографиям и отправьте снова.",
+    working: "✅ Принято — обрабатываю ваше объявление. Это займёт около полминуты…",
     draftCreated: "Черновик создан",
     missingLabel: "Не хватает",
     notMatched: "Не распознано (оставлено пустым)",
@@ -154,6 +158,7 @@ export const M: Record<Lang, Messages> = {
       "Këshillë: dërgojini imazhet si skedarë për cilësi të plotë. Do të krijoj një draft për shqyrtim — asgjë nuk publikohet automatikisht.",
     greeting: (name) => `Përshëndetje, ${name}! `,
     noCaption: "Ju lutem shtoni përshkrimin e njoftimit si tekst te fotot dhe dërgoni përsëri.",
+    working: "✅ E mora — po e përpunoj njoftimin tuaj. Kjo zgjat rreth gjysmë minute…",
     draftCreated: "Drafti u krijua",
     missingLabel: "Mungon",
     notMatched: "Nuk u gjet (u la bosh)",
@@ -188,6 +193,7 @@ export const M: Record<Lang, Messages> = {
       "Consiglio: invia le immagini come file per la massima qualità. Creerò una bozza da revisionare — nulla va online automaticamente.",
     greeting: (name) => `Ciao ${name}! `,
     noCaption: "Aggiungi la descrizione dell'annuncio come didascalia delle foto e invia di nuovo.",
+    working: "✅ Ricevuto — sto elaborando il tuo annuncio. Ci vorrà circa mezzo minuto…",
     draftCreated: "Bozza creata",
     missingLabel: "Mancano",
     notMatched: "Non riconosciuto (lasciato vuoto)",

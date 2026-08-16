@@ -55,6 +55,9 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
     return
   }
 
+  // Immediate feedback — parse + photo uploads take up to ~half a minute.
+  await deps.telegram.sendMessage(chatId, t.working)
+
   const parsed = await deps.parse(caption, photoFileIds.length)
   if (!parsed) {
     // The parse layer already logged the details.
