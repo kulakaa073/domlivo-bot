@@ -1,0 +1,25 @@
+{
+  "name": "domlivo-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "set-webhook": "tsx scripts/setWebhook.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
+    "@sanity/client": "^8.0.0",
+    "@upstash/redis": "^1.38.2",
+    "@vercel/functions": "^3.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@vercel/node": "^5.10.1",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
