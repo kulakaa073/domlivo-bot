@@ -25,6 +25,9 @@ import {M, pickLang} from '../src/messages.js'
 
 const GROUP_DEBOUNCE_MS = 3000
 
+/** Heavy work to run after the 200 (album assembly, the listing pipeline). */
+type Deferred = (() => Promise<void>) | null
+
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   // Telegram must ALWAYS get a 200 — anything else triggers redelivery storms.
   // Every failure path below: detailed log line + bare user message when possible.
@@ -63,25 +66,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     await telegram.sendMessage(incoming.chatId, M[pickLang(incoming.languageCode)].bareError)
   }
 
-  // ➕ / ❌ must complete BEFORE the 200: they are quick, and the very next
-  // message from the sender must find the session already open (or closed) —
-  // otherwise a fast sender's first content message races past the session.
-  const quickAction = detectAction(incoming.text)
-  if (quickAction === 'add' || quickAction === 'cancel') {
-    await handleIncoming(incoming, cfg.config, telegram).catch(failLoudly)
-    res.status(200).json({ok: true})
-    return
+  // ORDERING: everything light (dedupe, session state, collection, acks) runs
+  // BEFORE the 200, so a sender's next message always sees this one's effects
+  // — otherwise "➕ then content" or "content then ✅" can race. Only the
+  // pipeline and album debounce are deferred past the response.
+  let deferred: Deferred = null
+  try {
+    deferred = await handleIncoming(incoming, cfg.config, telegram)
+  } catch (e) {
+    await failLoudly(e)
   }
-
-  waitUntil(handleIncoming(incoming, cfg.config, telegram).catch(failLoudly))
+  if (deferred) waitUntil(deferred().catch(failLoudly))
   res.status(200).json({ok: true})
 }
 
-async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: Telegram): Promise<void> {
+async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: Telegram): Promise<Deferred> {
   const redis: RedisLike = makeRedis(config.upstash)
   if (await isDuplicate(redis, incoming.updateId)) {
     log('info', 'duplicate_update', {updateId: incoming.updateId})
-    return
+    return null
   }
 
   const sanity = createClient({
@@ -117,7 +120,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
       msg = t.requestRecorded
     }
     await telegram.sendMessage(incoming.chatId, msg, {keyboard})
-    return
+    return null
   }
 
   // The SDK client satisfies AnthropicLike at runtime; its stricter param
@@ -146,57 +149,63 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     if (auth.kind !== 'ok') {
       const msg = auth.kind === 'disabled' ? t.disabled : auth.kind === 'pending' ? t.pending : t.refusal
       await telegram.sendMessage(incoming.chatId, msg, {keyboard})
-      return
+      return null
     }
     await openSession(redis, incoming.senderId)
     log('info', 'session_opened', {senderId: incoming.senderId})
     await telegram.sendMessage(incoming.chatId, t.sessionStarted, {keyboard})
-    return
+    return null
   }
   if (action === 'cancel') {
     await closeSession(redis, incoming.senderId)
     log('info', 'session_cancelled', {senderId: incoming.senderId})
     await telegram.sendMessage(incoming.chatId, t.sessionCancelled, {keyboard})
-    return
+    return null
   }
   if (action === 'submit') {
+    // Collect + close synchronously so no later message can join a closed pile;
+    // only the pipeline itself is deferred.
     const items = await collectSession(redis, incoming.senderId)
     if (!items || items.length === 0) {
       await telegram.sendMessage(incoming.chatId, t.sessionEmpty, {keyboard})
-      return
+      return null
     }
     await closeSession(redis, incoming.senderId)
     log('info', 'session_submitted', {senderId: incoming.senderId, items: items.length})
-    await processMessage(items, deps)
-    return
+    return () => processMessage(items, deps)
   }
 
-  // Open session: collect instead of processing. Albums still assemble first
-  // so the pile gets complete albums and the tally is sent once per album.
-  if (await isSessionOpen(redis, incoming.senderId)) {
-    if (incoming.mediaGroupId) {
-      await addToGroup(redis, incoming.mediaGroupId, incoming.updateId, item)
+  // Albums must debounce (their sibling updates are still arriving), so their
+  // handling is deferred; whether they land in a session pile or the quick
+  // pipeline is decided at claim time.
+  if (incoming.mediaGroupId) {
+    const groupId = incoming.mediaGroupId
+    return async () => {
+      await addToGroup(redis, groupId, incoming.updateId, item)
       await sleep(GROUP_DEBOUNCE_MS)
-      const albumItems = await claimGroup(redis, incoming.mediaGroupId, incoming.updateId)
-      if (!albumItems) return
-      for (const it of albumItems) await addSessionItem(redis, incoming.senderId, it)
-    } else {
-      await addSessionItem(redis, incoming.senderId, item)
+      const albumItems = await claimGroup(redis, groupId, incoming.updateId)
+      if (!albumItems) return // another invocation of this album is the collector
+      if (await isSessionOpen(redis, incoming.senderId)) {
+        for (const it of albumItems) await addSessionItem(redis, incoming.senderId, it)
+        const collected = (await collectSession(redis, incoming.senderId)) ?? []
+        const {photos, texts} = tally(collected)
+        await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard})
+        return
+      }
+      await processMessage(albumItems, deps)
     }
+  }
+
+  // Open session: collect synchronously — a ✅ right behind this message must
+  // find it already in the pile.
+  if (await isSessionOpen(redis, incoming.senderId)) {
+    await addSessionItem(redis, incoming.senderId, item)
     const collected = (await collectSession(redis, incoming.senderId)) ?? []
     const {photos, texts} = tally(collected)
     await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard})
-    return
+    return null
   }
 
-  // No session: the original quick path — one message or album in, draft out.
-  if (incoming.mediaGroupId) {
-    await addToGroup(redis, incoming.mediaGroupId, incoming.updateId, item)
-    await sleep(GROUP_DEBOUNCE_MS)
-    const items = await claimGroup(redis, incoming.mediaGroupId, incoming.updateId)
-    if (!items) return // another invocation of this album is the collector
-    await processMessage(items, deps)
-  } else {
-    await processMessage([item], deps)
-  }
+  // No session: the original quick path — one message in, draft out.
+  return () => processMessage([item], deps)
 }
