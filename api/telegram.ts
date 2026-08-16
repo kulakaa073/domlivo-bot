@@ -10,8 +10,8 @@ import {makeRedis} from '../src/redisClient.js'
 import {isDuplicate, addToGroup, claimGroup, sleep, type GroupItem, type RedisLike} from '../src/assembly.js'
 import {processMessage} from '../src/process.js'
 import {parseListing, type AnthropicLike} from '../src/parseListing.js'
-import {resolveAgent} from '../src/resolveAgent.js'
-import {BARE_ERROR, REFUSAL, DISABLED, USAGE} from '../src/report.js'
+import {resolveAgent, fileAccessRequest} from '../src/resolveAgent.js'
+import {BARE_ERROR, DISABLED, USAGE, PENDING, REQUEST_RECORDED} from '../src/report.js'
 
 const GROUP_DEBOUNCE_MS = 3000
 
@@ -76,8 +76,23 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     const auth = await resolveAgent(sanity, incoming.senderId)
     // Username is logged for onboarding (mapping ids to known people), never used for auth.
     log('info', 'start_command', {senderId: incoming.senderId, username: incoming.username, auth: auth.kind})
-    const msg =
-      auth.kind === 'ok' ? `Hi ${auth.agentName}! ${USAGE}` : auth.kind === 'disabled' ? DISABLED : REFUSAL
+    let msg: string
+    if (auth.kind === 'ok') {
+      msg = `Hi ${auth.agentName}! ${USAGE}`
+    } else if (auth.kind === 'disabled') {
+      msg = DISABLED
+    } else if (auth.kind === 'pending') {
+      msg = PENDING
+    } else {
+      // Unknown sender pressing Start IS the access request.
+      await fileAccessRequest(sanity, {
+        senderId: incoming.senderId,
+        username: incoming.username,
+        firstName: incoming.firstName,
+      })
+      log('info', 'access_request_filed', {senderId: incoming.senderId, username: incoming.username})
+      msg = REQUEST_RECORDED
+    }
     await telegram.sendMessage(incoming.chatId, msg)
     return
   }

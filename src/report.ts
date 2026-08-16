@@ -5,7 +5,14 @@ export const BARE_ERROR =
   '⚠️ Something went wrong on our side. The listing was not saved — please try again in a few minutes.'
 
 export const REFUSAL =
-  'Sorry, this bot only accepts listings from registered DomLivo agents.'
+  'Sorry, this bot only accepts listings from registered DomLivo agents. Press /start to request access.'
+
+export const PENDING =
+  'Your access request is waiting for approval. You will be able to submit listings once a manager approves it.'
+
+export const REQUEST_RECORDED =
+  'Thanks! Your request has been recorded — your Telegram id and username were sent to the DomLivo team. ' +
+  'You will be able to submit listings as soon as a manager approves you.'
 
 export const DISABLED = 'The intake bot is currently switched off. Please try again later.'
 

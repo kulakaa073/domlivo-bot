@@ -8,7 +8,7 @@ import {resolveRefs} from './resolveRefs.js'
 import {validateFacts} from './validate.js'
 import {buildDraft} from './buildDraft.js'
 import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
-import {buildReply, BARE_ERROR, REFUSAL, DISABLED} from './report.js'
+import {buildReply, BARE_ERROR, REFUSAL, DISABLED, PENDING} from './report.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
@@ -34,6 +34,11 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   if (auth.kind === 'disabled') {
     log('warn', 'refused_disabled', {senderId, username: first.username})
     await deps.telegram.sendMessage(chatId, DISABLED)
+    return
+  }
+  if (auth.kind === 'pending') {
+    log('info', 'refused_pending', {senderId, username: first.username})
+    await deps.telegram.sendMessage(chatId, PENDING)
     return
   }
   if (auth.kind === 'unknown') {
