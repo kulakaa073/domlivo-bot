@@ -2,7 +2,7 @@ export type TgUpdate = {
   update_id: number
   message?: {
     message_id: number
-    from?: {id: number; is_bot?: boolean; first_name?: string; username?: string}
+    from?: {id: number; is_bot?: boolean; first_name?: string; username?: string; language_code?: string}
     chat?: {id: number; type: string}
     media_group_id?: string
     text?: string
@@ -19,6 +19,8 @@ export type Incoming = {
   /** Telegram @username if the account has one — used for onboarding only, never for auth. */
   username: string | null
   firstName: string | null
+  /** Telegram client language ("uk", "ru-RU", ...) — used to localize bot replies. */
+  languageCode: string | null
   mediaGroupId: string | null
   /** caption (media) or text (plain message) */
   text: string | null
@@ -48,6 +50,7 @@ export function extractIncoming(update: TgUpdate): Incoming | null {
     senderId: m.from.id,
     username: m.from.username ?? null,
     firstName: m.from.first_name ?? null,
+    languageCode: m.from.language_code ?? null,
     mediaGroupId: m.media_group_id ?? null,
     text,
     photoFileId,

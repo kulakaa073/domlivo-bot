@@ -35,6 +35,7 @@ const item = (n: number): GroupItem => ({
   senderId: 111,
   chatId: 111,
   username: null,
+  languageCode: null,
 })
 
 describe('dedupe', () => {

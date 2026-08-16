@@ -48,8 +48,8 @@ function deps(over: Partial<Record<string, unknown>> = {}) {
 }
 
 const items: GroupItem[] = [
-  {photoFileId: 'f1', text: 'Shitet 2+1 Parruce Shkoder 76m2 59000 EUR', senderId: 111, chatId: 111, username: 'blerina'},
-  {photoFileId: 'f2', text: null, senderId: 111, chatId: 111, username: 'blerina'},
+  {photoFileId: 'f1', text: 'Shitet 2+1 Parruce Shkoder 76m2 59000 EUR', senderId: 111, chatId: 111, username: 'blerina', languageCode: 'en'},
+  {photoFileId: 'f2', text: null, senderId: 111, chatId: 111, username: 'blerina', languageCode: 'en'},
 ]
 
 describe('processMessage', () => {
@@ -77,7 +77,7 @@ describe('processMessage', () => {
 
   it('asks for text when the album has no caption', async () => {
     const {d, created, sent} = deps()
-    await processMessage([{photoFileId: 'f1', text: null, senderId: 111, chatId: 111, username: 'blerina'}], d)
+    await processMessage([{photoFileId: 'f1', text: null, senderId: 111, chatId: 111, username: 'blerina', languageCode: 'en'}], d)
     expect(created.length).toBe(0)
     expect(sent[0]).toMatch(/caption|description/i)
   })

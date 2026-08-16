@@ -1,28 +1,23 @@
 import type {Outcome} from './types.js'
+import {M, type Lang} from './messages.js'
 
-/** The ONLY thing users see on internal failure. Details go to Vercel logs. */
-export const BARE_ERROR =
-  '⚠️ Something went wrong on our side. The listing was not saved — please try again in a few minutes.'
-
-export const REFUSAL =
-  'Sorry, this bot only accepts listings from registered DomLivo agents. Press /start to request access.'
-
-export const PENDING =
-  'Your access request is waiting for approval. You will be able to submit listings once a manager approves it.'
-
-export const REQUEST_RECORDED =
-  'Thanks! Your request has been recorded — your Telegram id and username were sent to the DomLivo team. ' +
-  'You will be able to submit listings as soon as a manager approves you.'
-
-export const DISABLED = 'The intake bot is currently switched off. Please try again later.'
-
-export const USAGE =
-  'Send me property photos as an album, with the listing text in the caption (any language). ' +
-  'Tip: send images as files for full quality. I will create a draft for review — nothing goes live automatically.'
+// English aliases kept for tests and log-side references.
+export const BARE_ERROR = M.en.bareError
+export const REFUSAL = M.en.refusal
+export const DISABLED = M.en.disabled
+export const PENDING = M.en.pending
+export const REQUEST_RECORDED = M.en.requestRecorded
+export const USAGE = M.en.usage
 
 const fmtEur = (n: number) => `€${n.toLocaleString('en-US')}`
 
-export function buildReply(o: Outcome, studioBaseUrl: string): string {
+/**
+ * The reply skeleton is localized via the sender's Telegram language_code.
+ * Validation warnings (o.validation.warnings) stay English in v1 — they are
+ * review-oriented technical detail.
+ */
+export function buildReply(o: Outcome, studioBaseUrl: string, lang: Lang = 'en'): string {
+  const t = M[lang]
   const f = o.parsed.facts
 
   const summaryBits = [
@@ -30,33 +25,33 @@ export function buildReply(o: Outcome, studioBaseUrl: string): string {
     f.cityName ? (f.districtName ? `${f.districtName}, ${f.cityName}` : f.cityName) : null,
     f.areaM2 !== null ? `${f.areaM2} m²` : null,
     o.validation.priceEur !== null ? fmtEur(o.validation.priceEur) : null,
-    `${o.photoCount} photos`,
+    `${o.photoCount} ${t.photosWord}`,
   ].filter(Boolean)
 
   const missing: string[] = []
-  if (!o.parsed.editorial.title.en) missing.push('title')
-  if (o.validation.priceEur === null) missing.push('price')
-  if (!f.dealType) missing.push('sale or rent')
-  if (!o.refs.propertyTypeId) missing.push('property type')
-  if (!o.refs.cityId) missing.push('city')
-  if (f.areaM2 === null) missing.push('area (m²)')
-  if (f.bedrooms === null) missing.push('bedrooms')
-  if (o.photoCount === 0) missing.push('photos')
+  if (!o.parsed.editorial.title.en) missing.push(t.fields.title)
+  if (o.validation.priceEur === null) missing.push(t.fields.price)
+  if (!f.dealType) missing.push(t.fields.deal)
+  if (!o.refs.propertyTypeId) missing.push(t.fields.type)
+  if (!o.refs.cityId) missing.push(t.fields.city)
+  if (f.areaM2 === null) missing.push(t.fields.area)
+  if (f.bedrooms === null) missing.push(t.fields.bedrooms)
+  if (o.photoCount === 0) missing.push(t.fields.photos)
 
   const problems = [
-    ...(missing.length ? [`Missing: ${missing.join(', ')}`] : []),
-    ...o.refs.unmatched.map((u) => `Not matched (left empty): ${u}`),
+    ...(missing.length ? [`${t.missingLabel}: ${missing.join(', ')}`] : []),
+    ...o.refs.unmatched.map((u) => `${t.notMatched}: ${u}`),
     ...o.validation.warnings,
-    ...(o.photosFailed > 0 ? [`${o.photosFailed} photo(s) failed to upload`] : []),
+    ...(o.photosFailed > 0 ? [t.photosFailed(o.photosFailed)] : []),
     ...(o.parsed.parserNotes ? [o.parsed.parserNotes] : []),
   ]
 
   const editId = o.draftId.replace(/^drafts\./, '')
   const lines = [
-    `🏠 Draft created: ${summaryBits.join(' · ')}`,
+    `🏠 ${t.draftCreated}: ${summaryBits.join(' · ')}`,
     ...(problems.length ? ['', ...problems.map((p) => `⚠ ${p}`)] : []),
     '',
-    `Review and publish: ${studioBaseUrl}/intent/edit/id=${editId};type=property`,
+    `${t.review}: ${studioBaseUrl}/intent/edit/id=${editId};type=property`,
   ]
   return lines.join('\n')
 }

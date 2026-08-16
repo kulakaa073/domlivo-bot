@@ -11,7 +11,8 @@ import {isDuplicate, addToGroup, claimGroup, sleep, type GroupItem, type RedisLi
 import {processMessage} from '../src/process.js'
 import {parseListing, type AnthropicLike} from '../src/parseListing.js'
 import {resolveAgent, fileAccessRequest} from '../src/resolveAgent.js'
-import {BARE_ERROR, DISABLED, USAGE, PENDING, REQUEST_RECORDED} from '../src/report.js'
+import {BARE_ERROR} from '../src/report.js'
+import {M, pickLang} from '../src/messages.js'
 
 const GROUP_DEBOUNCE_MS = 3000
 
@@ -51,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   waitUntil(
     handleIncoming(incoming, cfg.config, telegram).catch(async (e) => {
       log('error', 'pipeline_failed', {updateId: incoming.updateId, senderId: incoming.senderId, ...errInfo(e)})
-      await telegram.sendMessage(incoming.chatId, BARE_ERROR)
+      await telegram.sendMessage(incoming.chatId, M[pickLang(incoming.languageCode)].bareError)
     }),
   )
   res.status(200).json({ok: true})
@@ -74,15 +75,16 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
 
   if (incoming.command === '/start') {
     const auth = await resolveAgent(sanity, incoming.senderId)
+    const t = M[pickLang(incoming.languageCode)]
     // Username is logged for onboarding (mapping ids to known people), never used for auth.
     log('info', 'start_command', {senderId: incoming.senderId, username: incoming.username, auth: auth.kind})
     let msg: string
     if (auth.kind === 'ok') {
-      msg = `Hi ${auth.agentName}! ${USAGE}`
+      msg = `${t.greeting(auth.agentName)}${t.usage}`
     } else if (auth.kind === 'disabled') {
-      msg = DISABLED
+      msg = t.disabled
     } else if (auth.kind === 'pending') {
-      msg = PENDING
+      msg = t.pending
     } else {
       // Unknown sender pressing Start IS the access request.
       await fileAccessRequest(sanity, {
@@ -91,7 +93,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
         firstName: incoming.firstName,
       })
       log('info', 'access_request_filed', {senderId: incoming.senderId, username: incoming.username})
-      msg = REQUEST_RECORDED
+      msg = t.requestRecorded
     }
     await telegram.sendMessage(incoming.chatId, msg)
     return
@@ -113,6 +115,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     senderId: incoming.senderId,
     chatId: incoming.chatId,
     username: incoming.username,
+    languageCode: incoming.languageCode,
   }
 
   if (incoming.mediaGroupId) {

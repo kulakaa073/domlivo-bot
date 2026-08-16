@@ -2,7 +2,7 @@ export const singlePhoto = {
   update_id: 900001,
   message: {
     message_id: 101,
-    from: {id: 111111111, is_bot: false, first_name: 'Blerina'},
+    from: {id: 111111111, is_bot: false, first_name: 'Blerina', language_code: 'sq'},
     chat: {id: 111111111, type: 'private'},
     date: 1755300000,
     photo: [

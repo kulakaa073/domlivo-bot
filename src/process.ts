@@ -8,7 +8,8 @@ import {resolveRefs} from './resolveRefs.js'
 import {validateFacts} from './validate.js'
 import {buildDraft} from './buildDraft.js'
 import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
-import {buildReply, BARE_ERROR, REFUSAL, DISABLED, PENDING} from './report.js'
+import {buildReply} from './report.js'
+import {M, pickLang} from './messages.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
@@ -27,38 +28,37 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const first = items[0]
   if (!first) return
   const {chatId, senderId} = first
-  const caption = items.map((i) => i.text).find((t) => t !== null) ?? null
+  const lang = pickLang(first.languageCode)
+  const t = M[lang]
+  const caption = items.map((i) => i.text).find((x) => x !== null) ?? null
   const photoFileIds = items.flatMap((i) => (i.photoFileId ? [i.photoFileId] : []))
 
   const auth = await resolveAgent(deps.sanity, senderId)
   if (auth.kind === 'disabled') {
     log('warn', 'refused_disabled', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, DISABLED)
+    await deps.telegram.sendMessage(chatId, t.disabled)
     return
   }
   if (auth.kind === 'pending') {
     log('info', 'refused_pending', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, PENDING)
+    await deps.telegram.sendMessage(chatId, t.pending)
     return
   }
   if (auth.kind === 'unknown') {
     log('warn', 'refused_unknown_sender', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, REFUSAL)
+    await deps.telegram.sendMessage(chatId, t.refusal)
     return
   }
 
   if (!caption) {
-    await deps.telegram.sendMessage(
-      chatId,
-      'Please include the listing description as the caption of the photos, then send again.',
-    )
+    await deps.telegram.sendMessage(chatId, t.noCaption)
     return
   }
 
   const parsed = await deps.parse(caption, photoFileIds.length)
   if (!parsed) {
     // The parse layer already logged the details.
-    await deps.telegram.sendMessage(chatId, BARE_ERROR)
+    await deps.telegram.sendMessage(chatId, t.bareError)
     return
   }
 
@@ -83,6 +83,7 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const reply = buildReply(
     {parsed, refs, validation, photoCount: assetIds.length, photosFailed: failed, draftId: String(doc._id)},
     deps.studioBaseUrl,
+    lang,
   )
   await deps.telegram.sendMessage(chatId, reply)
 }
