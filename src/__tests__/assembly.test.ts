@@ -26,6 +26,10 @@ function fakeRedis(): RedisLike {
     async expire() {
       return 1
     },
+    async del(key) {
+      const had = kv.delete(key) || lists.delete(key)
+      return had ? 1 : 0
+    },
   }
 }
 

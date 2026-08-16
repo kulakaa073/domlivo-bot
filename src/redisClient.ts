@@ -18,5 +18,6 @@ export function makeRedis(cfg: {url: string; token: string}): RedisLike {
     rpush: (key, value) => r.rpush(key, value),
     lrange: (key, start, stop) => r.lrange<string>(key, start, stop),
     expire: (key, seconds) => r.expire(key, seconds),
+    del: (key) => r.del(key),
   }
 }

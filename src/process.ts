@@ -30,7 +30,10 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const {chatId, senderId} = first
   const lang = pickLang(first.languageCode)
   const t = M[lang]
-  const caption = items.map((i) => i.text).find((x) => x !== null) ?? null
+  // Session piles can hold several texts — hand them all to the parser, which
+  // is instructed to extract the single most complete listing from them.
+  const texts = items.flatMap((i) => (i.text !== null ? [i.text] : []))
+  const caption = texts.length > 0 ? texts.join('\n\n') : null
   const photoFileIds = items.flatMap((i) => (i.photoFileId ? [i.photoFileId] : []))
 
   const auth = await resolveAgent(deps.sanity, senderId)

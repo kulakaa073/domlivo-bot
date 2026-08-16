@@ -9,12 +9,25 @@ export class Telegram {
    * Best-effort reply. NEVER throws — a failed reply must not take down the
    * pipeline (the draft may already be written). Failures are logged in detail.
    */
-  async sendMessage(chatId: number, text: string): Promise<boolean> {
+  async sendMessage(chatId: number, text: string, opts?: {keyboard?: string[][]}): Promise<boolean> {
     try {
       const res = await fetch(`${API}/bot${this.token}/sendMessage`, {
         method: 'POST',
         headers: {'content-type': 'application/json'},
-        body: JSON.stringify({chat_id: chatId, text, link_preview_options: {is_disabled: true}}),
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          link_preview_options: {is_disabled: true},
+          ...(opts?.keyboard
+            ? {
+                reply_markup: {
+                  keyboard: opts.keyboard.map((row) => row.map((label) => ({text: label}))),
+                  resize_keyboard: true,
+                  is_persistent: true,
+                },
+              }
+            : {}),
+        }),
       })
       if (!res.ok) {
         log('error', 'tg_send_failed', {chatId, status: res.status, body: await res.text()})

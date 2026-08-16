@@ -4,6 +4,7 @@ export type RedisLike = {
   rpush(key: string, value: string): Promise<number>
   lrange(key: string, start: number, stop: number): Promise<string[]>
   expire(key: string, seconds: number): Promise<number>
+  del(key: string): Promise<number>
 }
 
 export type GroupItem = {

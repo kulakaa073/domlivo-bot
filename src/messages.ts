@@ -18,6 +18,13 @@ export type Messages = {
   greeting: (name: string) => string
   noCaption: string
   working: string
+  btnAdd: string
+  btnSubmit: string
+  btnCancel: string
+  sessionStarted: string
+  sessionTally: (photos: number, texts: number) => string
+  sessionCancelled: string
+  sessionEmpty: string
   draftCreated: string
   missingLabel: string
   notMatched: string
@@ -54,6 +61,15 @@ export const M: Record<Lang, Messages> = {
     greeting: (name) => `Hi ${name}! `,
     noCaption: "Please include the listing description as the caption of the photos, then send again.",
     working: "✅ Got it — processing your listing. This takes about half a minute…",
+    btnAdd: "➕ Add property",
+    btnSubmit: "✅ Submit",
+    btnCancel: "❌ Cancel",
+    sessionStarted:
+      "Session started — send photos and the listing text in as many messages as you like, then press ✅ Submit.",
+    sessionTally: (p, t) => `📥 Collected: ${p} photo(s), ${t} text message(s). Press ✅ Submit when done.`,
+    sessionCancelled: "Session cancelled — nothing was saved.",
+    sessionEmpty:
+      "Nothing to submit yet — press ➕ Add property, send photos and the description, then ✅ Submit.",
     draftCreated: "Draft created",
     missingLabel: "Missing",
     notMatched: "Not matched (left empty)",
@@ -89,6 +105,15 @@ export const M: Record<Lang, Messages> = {
     greeting: (name) => `Вітаю, ${name}! `,
     noCaption: "Будь ласка, додайте опис оголошення в підпис до фотографій і надішліть знову.",
     working: "✅ Прийнято — обробляю ваше оголошення. Це займе близько пів хвилини…",
+    btnAdd: "➕ Додати обʼєкт",
+    btnSubmit: "✅ Надіслати",
+    btnCancel: "❌ Скасувати",
+    sessionStarted:
+      "Сесію розпочато — надсилайте фото та текст оголошення будь-якою кількістю повідомлень, потім натисніть ✅ Надіслати.",
+    sessionTally: (p, t) => `📥 Зібрано: фото — ${p}, текстів — ${t}. Натисніть ✅ Надіслати, коли готово.`,
+    sessionCancelled: "Сесію скасовано — нічого не збережено.",
+    sessionEmpty:
+      "Ще немає що надсилати — натисніть ➕ Додати обʼєкт, надішліть фото та опис, потім ✅ Надіслати.",
     draftCreated: "Чернетку створено",
     missingLabel: "Бракує",
     notMatched: "Не розпізнано (залишено порожнім)",
@@ -124,6 +149,15 @@ export const M: Record<Lang, Messages> = {
     greeting: (name) => `Здравствуйте, ${name}! `,
     noCaption: "Пожалуйста, добавьте описание объявления в подпись к фотографиям и отправьте снова.",
     working: "✅ Принято — обрабатываю ваше объявление. Это займёт около полминуты…",
+    btnAdd: "➕ Добавить объект",
+    btnSubmit: "✅ Отправить",
+    btnCancel: "❌ Отменить",
+    sessionStarted:
+      "Сессия начата — отправляйте фото и текст объявления любым числом сообщений, затем нажмите ✅ Отправить.",
+    sessionTally: (p, t) => `📥 Собрано: фото — ${p}, текстов — ${t}. Нажмите ✅ Отправить, когда закончите.`,
+    sessionCancelled: "Сессия отменена — ничего не сохранено.",
+    sessionEmpty:
+      "Пока нечего отправлять — нажмите ➕ Добавить объект, отправьте фото и описание, затем ✅ Отправить.",
     draftCreated: "Черновик создан",
     missingLabel: "Не хватает",
     notMatched: "Не распознано (оставлено пустым)",
@@ -159,6 +193,15 @@ export const M: Record<Lang, Messages> = {
     greeting: (name) => `Përshëndetje, ${name}! `,
     noCaption: "Ju lutem shtoni përshkrimin e njoftimit si tekst te fotot dhe dërgoni përsëri.",
     working: "✅ E mora — po e përpunoj njoftimin tuaj. Kjo zgjat rreth gjysmë minute…",
+    btnAdd: "➕ Shto pronë",
+    btnSubmit: "✅ Dërgo",
+    btnCancel: "❌ Anulo",
+    sessionStarted:
+      "Sesioni filloi — dërgoni fotot dhe tekstin e njoftimit me sa mesazhe të doni, pastaj shtypni ✅ Dërgo.",
+    sessionTally: (p, t) => `📥 Të mbledhura: ${p} foto, ${t} tekste. Shtypni ✅ Dërgo kur të mbaroni.`,
+    sessionCancelled: "Sesioni u anulua — asgjë nuk u ruajt.",
+    sessionEmpty:
+      "Ende s'ka asgjë për të dërguar — shtypni ➕ Shto pronë, dërgoni fotot dhe përshkrimin, pastaj ✅ Dërgo.",
     draftCreated: "Drafti u krijua",
     missingLabel: "Mungon",
     notMatched: "Nuk u gjet (u la bosh)",
@@ -194,6 +237,15 @@ export const M: Record<Lang, Messages> = {
     greeting: (name) => `Ciao ${name}! `,
     noCaption: "Aggiungi la descrizione dell'annuncio come didascalia delle foto e invia di nuovo.",
     working: "✅ Ricevuto — sto elaborando il tuo annuncio. Ci vorrà circa mezzo minuto…",
+    btnAdd: "➕ Aggiungi immobile",
+    btnSubmit: "✅ Invia",
+    btnCancel: "❌ Annulla",
+    sessionStarted:
+      "Sessione avviata — invia foto e testo dell'annuncio in quanti messaggi vuoi, poi premi ✅ Invia.",
+    sessionTally: (p, t) => `📥 Raccolti: ${p} foto, ${t} testi. Premi ✅ Invia quando hai finito.`,
+    sessionCancelled: "Sessione annullata — nulla è stato salvato.",
+    sessionEmpty:
+      "Niente da inviare per ora — premi ➕ Aggiungi immobile, invia foto e descrizione, poi ✅ Invia.",
     draftCreated: "Bozza creata",
     missingLabel: "Mancano",
     notMatched: "Non riconosciuto (lasciato vuoto)",

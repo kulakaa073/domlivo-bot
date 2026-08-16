@@ -77,6 +77,25 @@ describe('processMessage', () => {
     expect(sent[0]).toContain('registered DomLivo agents')
   })
 
+  it('joins every collected text for the parser (session piles)', async () => {
+    const captions: string[] = []
+    const {d} = deps({
+      parse: vi.fn(async (caption: string) => {
+        captions.push(caption)
+        return parsedListing
+      }) as never,
+    })
+    await processMessage(
+      [
+        {photoFileId: 'f1', text: 'Shitet 2+1 Parruce', senderId: 111, chatId: 111, username: 'b', languageCode: 'en'},
+        {photoFileId: null, text: 'Cmimi 59000 EUR, kati 3', senderId: 111, chatId: 111, username: 'b', languageCode: 'en'},
+      ],
+      d,
+    )
+    expect(captions[0]).toContain('Shitet 2+1 Parruce')
+    expect(captions[0]).toContain('Cmimi 59000 EUR')
+  })
+
   it('asks for text when the album has no caption', async () => {
     const {d, created, sent} = deps()
     await processMessage([{photoFileId: 'f1', text: null, senderId: 111, chatId: 111, username: 'blerina', languageCode: 'en'}], d)

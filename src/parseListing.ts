@@ -85,8 +85,10 @@ Rules for editorial — write title, shortDescription and description in ALL fiv
 - shortDescription: 1–2 sentences.
 - description: 80–150 words built STRICTLY from stated facts. No invented details, no superlatives about things the text does not say.
 
+The input may be SEVERAL messages concatenated (separated by blank lines) and can include unrelated chatter or, occasionally, TWO different properties. Extract the SINGLE most complete property listing and ignore the rest. If you skip a second property or discard unrelated content, say so briefly in parserNotes (e.g. "a second property was mentioned — skipped; submit it separately").
+
 sourceLanguage: BCP-47 code of the input text ("sq", "ru", ...).
-parserNotes: one or two sentences about anything ambiguous or unusual (e.g. the price might be in old lek, the location is unclear). Empty string if nothing.`
+parserNotes: one or two sentences about anything ambiguous or unusual (e.g. the price might be in old lek, the location is unclear, content was discarded). Empty string if nothing.`
 
 /** One call parses the caption AND writes all five locales. Returns null on any failure (logged). */
 export async function parseListing(
