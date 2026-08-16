@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {buildReply, BARE_ERROR, REFUSAL, DISABLED} from '../report'
-import type {Outcome} from '../types'
+import {buildReply, BARE_ERROR, REFUSAL, DISABLED} from '../report.js'
+import type {Outcome} from '../types.js'
 
 const base: Outcome = {
   parsed: {

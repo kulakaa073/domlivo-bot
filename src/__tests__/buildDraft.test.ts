@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {buildDraft, slugify} from '../buildDraft'
-import type {ParsedListing, ResolvedRefs, ValidationResult} from '../types'
+import {buildDraft, slugify} from '../buildDraft.js'
+import type {ParsedListing, ResolvedRefs, ValidationResult} from '../types.js'
 
 const parsed: ParsedListing = {
   facts: {

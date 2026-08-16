@@ -1,4 +1,4 @@
-import type {ParsedFacts, ValidationResult} from './types'
+import type {ParsedFacts, ValidationResult} from './types.js'
 
 export const LEK_PER_EUR = 98
 export const EUR_PER_USD = 0.92

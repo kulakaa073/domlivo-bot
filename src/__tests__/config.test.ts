@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {loadConfig} from '../config'
+import {loadConfig} from '../config.js'
 
 const FULL = {
   TELEGRAM_BOT_TOKEN: 't',

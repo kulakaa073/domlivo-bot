@@ -1,4 +1,4 @@
-import {log, errInfo} from '../log'
+import {log, errInfo} from '../log.js'
 
 const API = 'https://api.telegram.org'
 

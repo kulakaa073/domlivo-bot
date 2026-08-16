@@ -1,5 +1,5 @@
-import type {SanityFetchLike} from './resolveAgent'
-import type {ParsedFacts, ResolvedRefs} from './types'
+import type {SanityFetchLike} from './resolveAgent.js'
+import type {ParsedFacts, ResolvedRefs} from './types.js'
 
 /** "Parrucë" -> "parruce" — same diacritic trap the listing parser handled. */
 export function fold(s: string): string {

@@ -1,4 +1,4 @@
-import type {Outcome} from './types'
+import type {Outcome} from './types.js'
 
 /** The ONLY thing users see on internal failure. Details go to Vercel logs. */
 export const BARE_ERROR =

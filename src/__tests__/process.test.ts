@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest'
-import {processMessage, type PipelineDeps} from '../process'
-import type {GroupItem} from '../assembly'
+import {processMessage, type PipelineDeps} from '../process.js'
+import type {GroupItem} from '../assembly.js'
 
 const parsedListing = {
   facts: {

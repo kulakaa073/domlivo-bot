@@ -1,5 +1,5 @@
-import {log, errInfo} from './log'
-import type {ParsedListing} from './types'
+import {log, errInfo} from './log.js'
+import type {ParsedListing} from './types.js'
 
 export const MODEL = 'claude-sonnet-5'
 

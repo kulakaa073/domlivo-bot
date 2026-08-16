@@ -1,4 +1,4 @@
-import type {ParsedListing, ResolvedRefs, ValidationResult} from './types'
+import type {ParsedListing, ResolvedRefs, ValidationResult} from './types.js'
 
 export function slugify(s: string): string {
   return s

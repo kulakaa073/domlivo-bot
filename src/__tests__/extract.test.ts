@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {extractIncoming} from '../telegram/extract'
-import * as fx from './fixtures/updates'
+import {extractIncoming} from '../telegram/extract.js'
+import * as fx from './fixtures/updates.js'
 
 describe('extractIncoming', () => {
   it('picks the LARGEST photo size (Telegram sorts ascending)', () => {

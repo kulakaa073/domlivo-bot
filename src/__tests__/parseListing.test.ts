@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {parseListing, LISTING_SCHEMA, type AnthropicLike} from '../parseListing'
+import {parseListing, LISTING_SCHEMA, type AnthropicLike} from '../parseListing.js'
 
 const recordedInput = {
   facts: {

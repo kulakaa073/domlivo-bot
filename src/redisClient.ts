@@ -1,5 +1,5 @@
 import {Redis} from '@upstash/redis'
-import type {RedisLike} from './assembly'
+import type {RedisLike} from './assembly.js'
 
 export function makeRedis(cfg: {url: string; token: string}): RedisLike {
   // automaticDeserialization must be OFF: we store JSON strings and need them

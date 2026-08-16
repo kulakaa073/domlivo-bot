@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {uploadPhotos, type SanityWriteLike, type FileFetcher} from '../writeDraft'
+import {uploadPhotos, type SanityWriteLike, type FileFetcher} from '../writeDraft.js'
 
 describe('uploadPhotos', () => {
   const sanity: SanityWriteLike = {

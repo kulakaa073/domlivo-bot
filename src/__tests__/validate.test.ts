@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {validateFacts} from '../validate'
-import type {ParsedFacts} from '../types'
+import {validateFacts} from '../validate.js'
+import type {ParsedFacts} from '../types.js'
 
 const facts = (over: Partial<ParsedFacts>): ParsedFacts => ({
   price: null, dealType: null, areaM2: null, bedrooms: null, bathrooms: null,

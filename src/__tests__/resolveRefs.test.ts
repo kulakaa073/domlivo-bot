@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {fold, resolveRefs} from '../resolveRefs'
-import type {ParsedFacts} from '../types'
+import {fold, resolveRefs} from '../resolveRefs.js'
+import type {ParsedFacts} from '../types.js'
 
 const taxonomy = {
   propertyTypes: [{_id: 'pt-apartment', title: {en: 'Apartment', sq: 'Apartament'}, slug: 'apartment'}],

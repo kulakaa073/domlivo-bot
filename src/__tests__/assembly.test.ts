@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {isDuplicate, addToGroup, claimGroup, type RedisLike, type GroupItem} from '../assembly'
+import {isDuplicate, addToGroup, claimGroup, type RedisLike, type GroupItem} from '../assembly.js'
 
 function fakeRedis(): RedisLike {
   const kv = new Map<string, string>()

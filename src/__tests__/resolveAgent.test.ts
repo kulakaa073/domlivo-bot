@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {resolveAgent, type SanityFetchLike} from '../resolveAgent'
+import {resolveAgent, type SanityFetchLike} from '../resolveAgent.js'
 
 function sanityWith(data: {
   settings?: {botEnabled?: boolean; botOwnerTelegramUserId?: number; defaultAgent?: {_id: string; name: string} | null}

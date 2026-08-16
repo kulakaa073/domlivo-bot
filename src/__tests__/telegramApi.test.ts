@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest'
-import {Telegram} from '../telegram/api'
+import {Telegram} from '../telegram/api.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
