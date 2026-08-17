@@ -55,6 +55,30 @@ export function coordsFromUrl(raw: string): Coords | null {
   return null
 }
 
+/**
+ * Fallback for share links that resolve to a place-name search (?q=…&ftid=…)
+ * with no numeric coordinates in the URL: the `output=embed` form of the same
+ * URL is server-rendered and tiny, and carries the place's [lat,lng] literally.
+ * (The full page is useless here — its static center is the VIEWER's IP
+ * location, not the place.)
+ */
+async function coordsFromEmbed(mapsUrl: string, fetchFn: typeof fetch): Promise<Coords | null> {
+  try {
+    const u = parseUrl(mapsUrl)
+    if (!u || !FULL_HOST_RE.test(u.hostname) || !/\/maps/i.test(u.pathname)) return null
+    u.searchParams.set('output', 'embed')
+    const res = await fetchFn(u.href, {redirect: 'follow'})
+    const body = (await res.text()).slice(0, 100_000)
+    const m = body.match(/\[(-?\d{1,2}\.\d{4,}),(-?\d{1,3}\.\d{4,})\]/)
+    if (!m) return null
+    const c = {lat: Number.parseFloat(m[1]!), lng: Number.parseFloat(m[2]!)}
+    return Number.isFinite(c.lat) && Number.isFinite(c.lng) ? c : null
+  } catch (e) {
+    log('warn', 'maplink_embed_failed', {url: mapsUrl, ...errInfo(e)})
+    return null
+  }
+}
+
 export function findMapLinks(text: string): URL[] {
   const raw = text.match(/https?:\/\/\S+/g) ?? []
   return raw
@@ -86,7 +110,15 @@ export async function extractMapCoordinates(
     }
     const coords = coordsFromUrl(target)
     if (coords && inBounds(coords)) return {linkFound: true, coords}
-    if (coords) log('warn', 'maplink_out_of_bounds', {url: link.href, ...coords})
+    if (coords) {
+      // A real pin, just not in our region — do not second-guess it via embed.
+      log('warn', 'maplink_out_of_bounds', {url: link.href, ...coords})
+      continue
+    }
+    // URL carries no numbers (place-name search form) — ask the embed page.
+    const embedded = await coordsFromEmbed(target, fetchFn)
+    if (embedded && inBounds(embedded)) return {linkFound: true, coords: embedded}
+    if (embedded) log('warn', 'maplink_out_of_bounds', {url: link.href, ...embedded})
   }
   return {linkFound: true, coords: null}
 }

@@ -43,10 +43,33 @@ describe('extractMapCoordinates', () => {
     expect(r).toEqual({linkFound: true, coords: {lat: 40.3251, lng: 19.4712}})
   })
 
+  it('falls back to the embed page for place-name search links (the ftid share form)', async () => {
+    // Replicates the real Orikum share link: short link -> ?q=Name&ftid=... with
+    // no numbers in the URL; the output=embed page carries the place [lat,lng].
+    const calls: string[] = []
+    const fakeFetch = (async (url: string | URL | Request) => {
+      const u = String(url)
+      calls.push(u)
+      if (u.includes('maps.app.goo.gl')) {
+        return {url: 'https://www.google.com/maps?q=Sea+%26+Sun+Apartment+Orikum&ftid=0x13452f:0x5520', text: async () => ''} as unknown as Response
+      }
+      expect(u).toContain('output=embed')
+      return {
+        url: u,
+        text: async () => 'window.APP="x";var d=[[[9,19.47,40.32]]];peer=[40.3286757,19.4719242];',
+      } as unknown as Response
+    }) as typeof fetch
+    const r = await extractMapCoordinates('Ja ku eshte: https://maps.app.goo.gl/hFjuMk1aKixgqrEx6?g_st=ic', fakeFetch)
+    expect(r).toEqual({linkFound: true, coords: {lat: 40.3286757, lng: 19.4719242}})
+    expect(calls.length).toBe(2)
+  })
+
   it('reports linkFound with null coords when the pin is unreadable or out of bounds', async () => {
-    const noCoords = await extractMapCoordinates('https://www.google.com/maps/place/Orikum')
+    const emptyFetch = (async () => ({url: '', text: async () => 'no numbers here'}) as unknown as Response) as typeof fetch
+    const noCoords = await extractMapCoordinates('https://www.google.com/maps/place/Orikum', emptyFetch)
     expect(noCoords).toEqual({linkFound: true, coords: null})
-    const paris = await extractMapCoordinates('https://www.google.com/maps/@48.8566,2.3522,12z')
+    // Out-of-bounds viewport pin: rejected without a second guess via embed.
+    const paris = await extractMapCoordinates('https://www.google.com/maps/@48.8566,2.3522,12z', emptyFetch)
     expect(paris).toEqual({linkFound: true, coords: null})
   })
 
