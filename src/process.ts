@@ -19,6 +19,8 @@ export type PipelineDeps = {
   telegram: Pick<Telegram, 'sendMessage' | 'downloadFile'>
   /** (caption, photoCount) -> ParsedListing | null. Injected so tests never hit the API. */
   parse: (caption: string, photoCount: number) => Promise<ParsedListing | null>
+  /** Reply keyboard reflecting the sender's post-pipeline state (no open session). */
+  keyboard?: string[][]
 }
 
 /**
@@ -41,22 +43,22 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const auth = await resolveAgent(deps.sanity, senderId)
   if (auth.kind === 'disabled') {
     log('warn', 'refused_disabled', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, t.disabled)
+    await deps.telegram.sendMessage(chatId, t.disabled, {keyboard: deps.keyboard})
     return
   }
   if (auth.kind === 'pending') {
     log('info', 'refused_pending', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, t.pending)
+    await deps.telegram.sendMessage(chatId, t.pending, {keyboard: deps.keyboard})
     return
   }
   if (auth.kind === 'unknown') {
     log('warn', 'refused_unknown_sender', {senderId, username: first.username})
-    await deps.telegram.sendMessage(chatId, t.refusal)
+    await deps.telegram.sendMessage(chatId, t.refusal, {keyboard: deps.keyboard})
     return
   }
 
   if (!caption) {
-    await deps.telegram.sendMessage(chatId, t.noCaption)
+    await deps.telegram.sendMessage(chatId, t.noCaption, {keyboard: deps.keyboard})
     return
   }
 
@@ -65,17 +67,17 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const verdict = screenCaption(caption)
   if (!verdict.ok) {
     log('warn', 'guard_rejected', {senderId, reason: verdict.reason, captionLength: caption.length})
-    await deps.telegram.sendMessage(chatId, t.notAListing)
+    await deps.telegram.sendMessage(chatId, t.notAListing, {keyboard: deps.keyboard})
     return
   }
 
   // Immediate feedback — parse + photo uploads take up to ~half a minute.
-  await deps.telegram.sendMessage(chatId, t.working)
+  await deps.telegram.sendMessage(chatId, t.working, {keyboard: deps.keyboard})
 
   const parsed = await deps.parse(caption, photoFileIds.length)
   if (!parsed) {
     // The parse layer already logged the details.
-    await deps.telegram.sendMessage(chatId, t.bareError)
+    await deps.telegram.sendMessage(chatId, t.bareError, {keyboard: deps.keyboard})
     return
   }
 
@@ -119,5 +121,5 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
     deps.studioBaseUrl,
     lang,
   )
-  await deps.telegram.sendMessage(chatId, reply)
+  await deps.telegram.sendMessage(chatId, reply, {keyboard: deps.keyboard})
 }

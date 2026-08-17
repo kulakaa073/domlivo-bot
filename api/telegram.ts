@@ -96,7 +96,9 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
   })
 
   const t = M[pickLang(incoming.languageCode)]
-  const keyboard = [[t.btnAdd], [t.btnSubmit, t.btnCancel]]
+  // State-aware reply keyboard: only buttons that currently do something.
+  const kbAdd = [[t.btnAdd]]
+  const kbSession = [[t.btnSubmit, t.btnCancel]]
 
   if (incoming.command === '/start') {
     const auth = await resolveAgent(sanity, incoming.senderId)
@@ -119,7 +121,9 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
       log('info', 'access_request_filed', {senderId: incoming.senderId, username: incoming.username})
       msg = t.requestRecorded
     }
-    await telegram.sendMessage(incoming.chatId, msg, {keyboard})
+    await telegram.sendMessage(incoming.chatId, msg, {
+      keyboard: (await isSessionOpen(redis, incoming.senderId)) ? kbSession : kbAdd,
+    })
     return null
   }
 
@@ -131,6 +135,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     sanity,
     telegram,
     parse: (caption: string, photoCount: number) => parseListing(anthropic, caption, photoCount),
+    keyboard: kbAdd, // pipeline replies always end with no open session
   }
 
   const item: GroupItem = {
@@ -148,18 +153,18 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     const auth = await resolveAgent(sanity, incoming.senderId)
     if (auth.kind !== 'ok') {
       const msg = auth.kind === 'disabled' ? t.disabled : auth.kind === 'pending' ? t.pending : t.refusal
-      await telegram.sendMessage(incoming.chatId, msg, {keyboard})
+      await telegram.sendMessage(incoming.chatId, msg, {keyboard: kbAdd})
       return null
     }
     await openSession(redis, incoming.senderId)
     log('info', 'session_opened', {senderId: incoming.senderId})
-    await telegram.sendMessage(incoming.chatId, t.sessionStarted, {keyboard})
+    await telegram.sendMessage(incoming.chatId, t.sessionStarted, {keyboard: kbSession})
     return null
   }
   if (action === 'cancel') {
     await closeSession(redis, incoming.senderId)
     log('info', 'session_cancelled', {senderId: incoming.senderId})
-    await telegram.sendMessage(incoming.chatId, t.sessionCancelled, {keyboard})
+    await telegram.sendMessage(incoming.chatId, t.sessionCancelled, {keyboard: kbAdd})
     return null
   }
   if (action === 'submit') {
@@ -167,7 +172,8 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     // only the pipeline itself is deferred.
     const items = await collectSession(redis, incoming.senderId)
     if (!items || items.length === 0) {
-      await telegram.sendMessage(incoming.chatId, t.sessionEmpty, {keyboard})
+      // No session at all -> offer to start one; open-but-empty -> keep session buttons.
+      await telegram.sendMessage(incoming.chatId, t.sessionEmpty, {keyboard: items ? kbSession : kbAdd})
       return null
     }
     await closeSession(redis, incoming.senderId)
@@ -189,7 +195,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
         for (const it of albumItems) await addSessionItem(redis, incoming.senderId, it)
         const collected = (await collectSession(redis, incoming.senderId)) ?? []
         const {photos, texts} = tally(collected)
-        await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard})
+        await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard: kbSession})
         return
       }
       await processMessage(albumItems, deps)
@@ -202,7 +208,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     await addSessionItem(redis, incoming.senderId, item)
     const collected = (await collectSession(redis, incoming.senderId)) ?? []
     const {photos, texts} = tally(collected)
-    await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard})
+    await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard: kbSession})
     return null
   }
 
