@@ -2,6 +2,7 @@ import {log, errInfo} from './log.js'
 import type {RedisLike} from './assembly.js'
 import type {AnthropicLike} from './parseListing.js'
 import {MODEL} from './parseListing.js'
+import {DEFAULT_LOCALES, localeLabels, localeObjectSchema} from './locales.js'
 
 /**
  * Shared gate for the Studio-facing endpoints (/api/studio-*). Compute-only
@@ -75,39 +76,34 @@ export async function gateStudioRequest(input: {
 // Translate call — one request covers every field of the document.
 
 export type TranslateItem = {key: string; kind: 'string' | 'text'; text: string}
-export type TranslatedItem = {key: string; locales: {en: string; uk: string; ru: string; sq: string; it: string}}
+export type TranslatedItem = {key: string; locales: Record<string, string>}
 
-const LOCALES = ['en', 'uk', 'ru', 'sq', 'it'] as const
-
-const TRANSLATE_SCHEMA = {
-  type: 'object',
-  properties: {
-    items: {
-      type: 'array',
+function buildTranslateSchema(locales: readonly string[]): Record<string, unknown> {
+  return {
+    type: 'object',
+    properties: {
       items: {
-        type: 'object',
-        properties: {
-          key: {type: 'string'},
-          locales: {
-            type: 'object',
-            properties: Object.fromEntries(LOCALES.map((l) => [l, {type: 'string'}])),
-            required: [...LOCALES],
-            additionalProperties: false,
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            key: {type: 'string'},
+            locales: localeObjectSchema(locales),
           },
+          required: ['key', 'locales'],
+          additionalProperties: false,
         },
-        required: ['key', 'locales'],
-        additionalProperties: false,
       },
     },
-  },
-  required: ['items'],
-  additionalProperties: false,
-} as const
+    required: ['items'],
+    additionalProperties: false,
+  }
+}
 
-const TRANSLATE_SYSTEM = `You translate CMS content for DomLivo, an Albanian real-estate site, between English (en), Ukrainian (uk), Russian (ru), Albanian (sq) and Italian (it).
+const TRANSLATE_SYSTEM_TEMPLATE = `You translate CMS content for DomLivo, an Albanian real-estate site, between these locales: __LOCALES__.
 
 Rules:
-- For every input item, return ALL five locales. The locale matching the given source language must be the input text unchanged.
+- For every input item, return ALL of the listed locales. The locale matching the given source language must be the input text unchanged.
 - Translate faithfully: no additions, no omissions, no marketing embellishment. Keep numbers, prices, area figures and proper nouns (place names in their locally common form: Durrës/Дуррес/Durazzo).
 - Preserve line breaks and paragraph structure for multi-line text.
 - Keep the register of the source (listing copy stays listing copy).`
@@ -116,20 +112,23 @@ export async function translateFields(
   client: AnthropicLike,
   sourceLang: string,
   items: TranslateItem[],
+  locales: readonly string[] = DEFAULT_LOCALES,
 ): Promise<TranslatedItem[] | null> {
   try {
     const payload = items.map((i) => ({key: i.key, kind: i.kind, text: i.text}))
     const msg = await client.messages.create({
       model: MODEL,
-      max_tokens: 8000,
-      system: TRANSLATE_SYSTEM,
+      max_tokens: Math.min(3000 + items.reduce((n, i) => n + i.text.length, 0) * locales.length, 32_000),
+      system: TRANSLATE_SYSTEM_TEMPLATE.replace('__LOCALES__', localeLabels(locales)),
       messages: [
         {
           role: 'user',
           content: `Source language: ${sourceLang}\n\nItems to translate (JSON):\n${JSON.stringify(payload, null, 2)}`,
         },
       ],
-      tools: [{name: 'record_translations', description: 'Record the translations.', input_schema: TRANSLATE_SCHEMA}],
+      tools: [
+        {name: 'record_translations', description: 'Record the translations.', input_schema: buildTranslateSchema(locales)},
+      ],
       tool_choice: {type: 'tool', name: 'record_translations'},
     })
     const tool = msg.content.find((b) => b.type === 'tool_use')

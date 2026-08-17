@@ -1,5 +1,6 @@
 import {log, errInfo} from './log.js'
 import type {ParsedListing} from './types.js'
+import {DEFAULT_LOCALES, localeLabels, localeObjectSchema} from './locales.js'
 
 export const MODEL = 'claude-sonnet-5'
 
@@ -10,16 +11,20 @@ export type AnthropicLike = {
   }
 }
 
-const LOCALES = ['en', 'uk', 'ru', 'sq', 'it'] as const
-
-const LOCALE_STRING = {
-  type: 'object',
-  properties: Object.fromEntries(LOCALES.map((l) => [l, {type: 'string'}])),
-  required: [...LOCALES],
-  additionalProperties: false,
+export function buildListingSchema(locales: readonly string[]): Record<string, unknown> {
+  const LOCALE_STRING = localeObjectSchema(locales)
+  return buildSchemaBody(LOCALE_STRING)
 }
 
-export const LISTING_SCHEMA = {
+/** Default-locale schema kept as a named export for tests and the Telegram path. */
+export const LISTING_SCHEMA = buildListingSchema(DEFAULT_LOCALES)
+
+function buildSchemaBody(LOCALE_STRING: Record<string, unknown>): Record<string, unknown> {
+  return SCHEMA_TEMPLATE(LOCALE_STRING)
+}
+
+function SCHEMA_TEMPLATE(LOCALE_STRING: Record<string, unknown>): Record<string, unknown> {
+  return {
   type: 'object',
   properties: {
     facts: {
@@ -69,9 +74,10 @@ export const LISTING_SCHEMA = {
   },
   required: ['facts', 'editorial', 'sourceLanguage', 'parserNotes'],
   additionalProperties: false,
-} as const
+  }
+}
 
-const SYSTEM_PROMPT = `You parse property listing messages for DomLivo, an Albanian real-estate site, and prepare them for its CMS.
+const SYSTEM_PROMPT_TEMPLATE = `You parse property listing messages for DomLivo, an Albanian real-estate site, and prepare them for its CMS.
 
 Rules for facts:
 - Extract ONLY what the text states. Return null for anything not stated. Never guess or infer.
@@ -80,7 +86,7 @@ Rules for facts:
 - cityName / districtName / propertyTypeName: the name as commonly written in Latin-script Albanian (e.g. "Shkodër", "Parrucë", "Apartament").
 - amenityNames: short English names, e.g. "Elevator", "Parking", "Balcony", "Sea view".
 
-Rules for editorial — write title, shortDescription and description in ALL five locales (en, uk, ru, sq, it):
+Rules for editorial — write title, shortDescription and description in ALL of these locales: __LOCALES__:
 - title: at most 70 characters, factual, no hype. Pattern: "<rooms> apartment in <district>, <city>" adapted to what is known.
 - shortDescription: 1–2 sentences.
 - description: 80–150 words built STRICTLY from stated facts. No invented details, no superlatives about things the text does not say.
@@ -90,19 +96,22 @@ The input may be SEVERAL messages concatenated (separated by blank lines) and ca
 sourceLanguage: BCP-47 code of the input text ("sq", "ru", ...).
 parserNotes: one or two sentences about anything ambiguous or unusual (e.g. the price might be in old lek, the location is unclear, content was discarded). Empty string if nothing.`
 
-/** One call parses the caption AND writes all five locales. Returns null on any failure (logged). */
+/** One call parses the caption AND writes every requested locale. Returns null on any failure (logged). */
 export async function parseListing(
   client: AnthropicLike,
   caption: string,
   photoCount: number,
+  locales: readonly string[] = DEFAULT_LOCALES,
 ): Promise<ParsedListing | null> {
   try {
+    const system = SYSTEM_PROMPT_TEMPLATE.replace('__LOCALES__', localeLabels(locales))
+    const schema = locales === DEFAULT_LOCALES ? LISTING_SCHEMA : buildListingSchema(locales)
     const msg = await client.messages.create({
       model: MODEL,
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
+      max_tokens: 4000 + locales.length * 400,
+      system,
       messages: [{role: 'user', content: `Photos attached: ${photoCount}\n\nListing text:\n${caption}`}],
-      tools: [{name: 'record_listing', description: 'Record the parsed listing.', input_schema: LISTING_SCHEMA}],
+      tools: [{name: 'record_listing', description: 'Record the parsed listing.', input_schema: schema}],
       tool_choice: {type: 'tool', name: 'record_listing'},
     })
     const tool = msg.content.find((b) => b.type === 'tool_use')

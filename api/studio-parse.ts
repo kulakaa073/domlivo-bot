@@ -10,6 +10,7 @@ import {resolveRefs} from '../src/resolveRefs.js'
 import {validateFacts} from '../src/validate.js'
 import {screenCaption} from '../src/guard.js'
 import {extractMapCoordinates} from '../src/mapLink.js'
+import {validateLocales} from '../src/locales.js'
 
 function applyCors(res: VercelResponse, origin: string | null): void {
   if (!origin) return
@@ -50,7 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const text = (req.body as {text?: string} | undefined)?.text
+  const body = req.body as {text?: string; locales?: unknown} | undefined
+  const text = body?.text
+  const locales = validateLocales(body?.locales)
+  if (!locales) {
+    res.status(400).json({error: 'locales must be 2-10 language codes'})
+    return
+  }
   if (typeof text !== 'string' || !text.trim()) {
     res.status(400).json({error: 'text is required'})
     return
@@ -65,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const anthropic = new Anthropic({apiKey: cfg.config.anthropicApiKey}) as unknown as AnthropicLike
-  const parsed = await parseListing(anthropic, text, 0)
+  const parsed = await parseListing(anthropic, text, 0, locales)
   if (!parsed) {
     res.status(502).json({error: 'parsing failed, try again'})
     return

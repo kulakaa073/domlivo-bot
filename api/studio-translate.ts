@@ -5,8 +5,8 @@ import {log} from '../src/log.js'
 import {makeRedis} from '../src/redisClient.js'
 import {gateStudioRequest, translateFields, type TranslateItem} from '../src/studioApi.js'
 import type {AnthropicLike} from '../src/parseListing.js'
+import {validateLocales} from '../src/locales.js'
 
-const LANGS = new Set(['en', 'uk', 'ru', 'sq', 'it'])
 const MAX_ITEMS = 40
 const MAX_CHARS = 20_000
 
@@ -49,11 +49,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const body = req.body as {sourceLang?: string; items?: TranslateItem[]} | undefined
+  const body = req.body as {sourceLang?: string; items?: TranslateItem[]; locales?: unknown} | undefined
   const sourceLang = body?.sourceLang
   const items = body?.items
-  if (!sourceLang || !LANGS.has(sourceLang) || !Array.isArray(items) || items.length === 0) {
-    res.status(400).json({error: 'sourceLang and items are required'})
+  const locales = validateLocales(body?.locales)
+  if (!locales) {
+    res.status(400).json({error: 'locales must be 2-10 language codes'})
+    return
+  }
+  if (!sourceLang || !locales.includes(sourceLang) || !Array.isArray(items) || items.length === 0) {
+    res.status(400).json({error: 'sourceLang (one of locales) and items are required'})
     return
   }
   if (items.length > MAX_ITEMS || items.reduce((n, i) => n + (i.text?.length ?? 0), 0) > MAX_CHARS) {
@@ -69,11 +74,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const anthropic = new Anthropic({apiKey: cfg.config.anthropicApiKey}) as unknown as AnthropicLike
-  const translated = await translateFields(anthropic, sourceLang, clean)
+  const translated = await translateFields(anthropic, sourceLang, clean, locales)
   if (!translated) {
     res.status(502).json({error: 'translation failed, try again'})
     return
   }
-  log('info', 'studio_translated', {items: clean.length, sourceLang, origin})
+  log('info', 'studio_translated', {items: clean.length, sourceLang, locales: locales.length, origin})
   res.status(200).json({items: translated})
 }
