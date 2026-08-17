@@ -23,6 +23,7 @@ const base: Outcome = {
   photoCount: 8,
   photosFailed: 0,
   draftId: 'drafts.property-tg-abc',
+  coords: null,
 }
 
 describe('buildReply', () => {
@@ -50,6 +51,12 @@ describe('buildReply', () => {
     }
     expect(r).toContain('Rus i madh')
     expect(r).toContain('2 photo(s) failed')
+  })
+
+  it('mentions coordinates when a map link supplied them', () => {
+    const withPin = buildReply({...base, coords: {lat: 40.3251, lng: 19.4712}}, 'https://s')
+    expect(withPin).toContain('📍')
+    expect(buildReply(base, 'https://s')).not.toContain('📍')
   })
 
   it('bare messages carry no internals', () => {

@@ -11,6 +11,7 @@ import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
 import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
 import {screenCaption} from './guard.js'
+import {extractMapCoordinates} from './mapLink.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
@@ -80,11 +81,20 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
 
   const refs = await resolveRefs(deps.sanity, parsed.facts)
   const validation = validateFacts(parsed.facts)
+
+  // Coordinates straight from a Google Maps link, if the message carried one.
+  const map = await extractMapCoordinates(caption)
+  if (map.linkFound && !map.coords) {
+    validation.warnings.push('map link found but coordinates could not be read — set the pin in Studio')
+  }
   const {assetIds, failed} = await uploadPhotos(deps.sanity, deps.telegram, photoFileIds, {
     agentName: auth.agentName,
   })
 
-  const doc = buildDraft({parsed, refs, validation, agentId: auth.agentId, assetIds}, randomUUID())
+  const doc = buildDraft(
+    {parsed, refs, validation, agentId: auth.agentId, assetIds, coords: map.coords},
+    randomUUID(),
+  )
   await createDraft(deps.sanity, doc)
   log('info', 'draft_created', {
     draftId: doc._id,
@@ -97,7 +107,15 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   })
 
   const reply = buildReply(
-    {parsed, refs, validation, photoCount: assetIds.length, photosFailed: failed, draftId: String(doc._id)},
+    {
+      parsed,
+      refs,
+      validation,
+      photoCount: assetIds.length,
+      photosFailed: failed,
+      draftId: String(doc._id),
+      coords: map.coords,
+    },
     deps.studioBaseUrl,
     lang,
   )

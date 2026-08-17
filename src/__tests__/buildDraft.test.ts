@@ -52,6 +52,16 @@ describe('buildDraft', () => {
     expect(doc.city).toEqual({_type: 'reference', _ref: 'city-shkoder'})
   })
 
+  it('writes map-link coordinates when provided, omits them otherwise', () => {
+    const withPin = buildDraft(
+      {parsed, refs, validation, agentId: 'agent-1', assetIds: [], coords: {lat: 40.3251, lng: 19.4712}},
+      'u3',
+    )
+    expect(withPin.coordinatesLat).toBe(40.3251)
+    expect(withPin.coordinatesLng).toBe(19.4712)
+    expect('coordinatesLat' in doc).toBe(false)
+  })
+
   it('builds the gallery with keys and alt text', () => {
     const gallery = doc.gallery as Array<Record<string, unknown>>
     expect(gallery.length).toBe(2)

@@ -17,6 +17,8 @@ export type DraftInput = {
   validation: ValidationResult
   agentId: string
   assetIds: string[]
+  /** From a Google Maps link in the message, already bounds-checked. */
+  coords?: {lat: number; lng: number} | null
 }
 
 const ref = (id: string) => ({_type: 'reference', _ref: id})
@@ -29,7 +31,7 @@ const ref = (id: string) => ({_type: 'reference', _ref: id})
  * where unset counts as published.
  */
 export function buildDraft(input: DraftInput, uuid: string): Record<string, unknown> {
-  const {parsed, refs, validation, agentId, assetIds} = input
+  const {parsed, refs, validation, agentId, assetIds, coords} = input
   const f = parsed.facts
   const titleEn = parsed.editorial.title.en
 
@@ -52,6 +54,10 @@ export function buildDraft(input: DraftInput, uuid: string): Record<string, unkn
   if (refs.cityId) doc.city = ref(refs.cityId)
   if (refs.districtId) doc.district = ref(refs.districtId)
   if (f.address) doc.address = {_type: 'localizedString', en: f.address}
+  if (coords) {
+    doc.coordinatesLat = coords.lat
+    doc.coordinatesLng = coords.lng
+  }
   if (f.areaM2 !== null) doc.area = f.areaM2
   if (f.bedrooms !== null) doc.bedrooms = f.bedrooms
   if (f.bathrooms !== null) doc.bathrooms = f.bathrooms

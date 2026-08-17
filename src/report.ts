@@ -49,6 +49,7 @@ export function buildReply(o: Outcome, studioBaseUrl: string, lang: Lang = 'en')
   const editId = o.draftId.replace(/^drafts\./, '')
   const lines = [
     `🏠 ${t.draftCreated}: ${summaryBits.join(' · ')}`,
+    ...(o.coords ? [t.coordsSet] : []),
     ...(problems.length ? ['', ...problems.map((p) => `⚠ ${p}`)] : []),
     '',
     `${t.review}: ${studioBaseUrl}/intent/edit/id=${editId};type=property`,

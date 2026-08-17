@@ -26,6 +26,7 @@ export type Messages = {
   sessionTally: (photos: number, texts: number) => string
   sessionCancelled: string
   sessionEmpty: string
+  coordsSet: string
   draftCreated: string
   missingLabel: string
   notMatched: string
@@ -73,6 +74,7 @@ export const M: Record<Lang, Messages> = {
     sessionCancelled: "Session cancelled — nothing was saved.",
     sessionEmpty:
       "Nothing to submit yet — press ➕ Add property, send photos and the description, then ✅ Submit.",
+    coordsSet: "📍 Coordinates taken from your map link.",
     draftCreated: "Draft created",
     missingLabel: "Missing",
     notMatched: "Not matched (left empty)",
@@ -119,6 +121,7 @@ export const M: Record<Lang, Messages> = {
     sessionCancelled: "Сесію скасовано — нічого не збережено.",
     sessionEmpty:
       "Ще немає що надсилати — натисніть ➕ Додати обʼєкт, надішліть фото та опис, потім ✅ Надіслати.",
+    coordsSet: "📍 Координати взято з вашого посилання на мапу.",
     draftCreated: "Чернетку створено",
     missingLabel: "Бракує",
     notMatched: "Не розпізнано (залишено порожнім)",
@@ -165,6 +168,7 @@ export const M: Record<Lang, Messages> = {
     sessionCancelled: "Сессия отменена — ничего не сохранено.",
     sessionEmpty:
       "Пока нечего отправлять — нажмите ➕ Добавить объект, отправьте фото и описание, затем ✅ Отправить.",
+    coordsSet: "📍 Координаты взяты из вашей ссылки на карту.",
     draftCreated: "Черновик создан",
     missingLabel: "Не хватает",
     notMatched: "Не распознано (оставлено пустым)",
@@ -211,6 +215,7 @@ export const M: Record<Lang, Messages> = {
     sessionCancelled: "Sesioni u anulua — asgjë nuk u ruajt.",
     sessionEmpty:
       "Ende s'ka asgjë për të dërguar — shtypni ➕ Shto pronë, dërgoni fotot dhe përshkrimin, pastaj ✅ Dërgo.",
+    coordsSet: "📍 Koordinatat u morën nga lidhja juaj e hartës.",
     draftCreated: "Drafti u krijua",
     missingLabel: "Mungon",
     notMatched: "Nuk u gjet (u la bosh)",
@@ -257,6 +262,7 @@ export const M: Record<Lang, Messages> = {
     sessionCancelled: "Sessione annullata — nulla è stato salvato.",
     sessionEmpty:
       "Niente da inviare per ora — premi ➕ Aggiungi immobile, invia foto e descrizione, poi ✅ Invia.",
+    coordsSet: "📍 Coordinate prese dal tuo link della mappa.",
     draftCreated: "Bozza creata",
     missingLabel: "Mancano",
     notMatched: "Non riconosciuto (lasciato vuoto)",

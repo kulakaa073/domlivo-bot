@@ -40,4 +40,6 @@ export type Outcome = {
   photoCount: number
   photosFailed: number
   draftId: string
+  /** Set when a Google Maps link in the message yielded a plausible pin. */
+  coords: {lat: number; lng: number} | null
 }
