@@ -12,6 +12,7 @@ import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
 import {screenCaption} from './guard.js'
 import {extractMapCoordinates} from './mapLink.js'
+import type {StartReviewArgs} from './review.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
@@ -21,6 +22,8 @@ export type PipelineDeps = {
   parse: (caption: string, photoCount: number) => Promise<ParsedListing | null>
   /** Reply keyboard reflecting the sender's post-pipeline state (no open session). */
   keyboard?: string[][]
+  /** Kicks off the preview + Update/Post review flow. Optional so the pipeline stays usable without it. */
+  startReview?: (args: StartReviewArgs) => Promise<void>
 }
 
 /**
@@ -122,4 +125,21 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
     lang,
   )
   await deps.telegram.sendMessage(chatId, reply, {keyboard: deps.keyboard})
+
+  if (deps.startReview) {
+    await deps.startReview({
+      senderId,
+      chatId,
+      lang,
+      agentName: auth.agentName,
+      draftId: String(doc._id),
+      data: {
+        parsed,
+        refs,
+        validation,
+        photoCount: assetIds.length,
+        coords: map.coords ?? null,
+      },
+    })
+  }
 }

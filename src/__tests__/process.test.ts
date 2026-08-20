@@ -102,4 +102,16 @@ describe('processMessage', () => {
     expect(created.length).toBe(0)
     expect(sent[0]).toMatch(/caption|description/i)
   })
+
+  it('calls startReview with the outcome after a successful draft', async () => {
+    const started: unknown[] = []
+    const {d} = deps({startReview: async (args: unknown) => { started.push(args) }})
+    await processMessage(items, d)
+    expect(started).toHaveLength(1)
+    const args = started[0] as {senderId: number; agentName: string; draftId: string; data: {photoCount: number}}
+    expect(args.senderId).toBe(111)
+    expect(args.agentName).toBe('Blerina')
+    expect(args.draftId).toMatch(/^drafts\.property-tg-/)
+    expect(args.data.photoCount).toBe(2)
+  })
 })
