@@ -23,31 +23,27 @@ export type DraftInput = {
 
 const ref = (id: string) => ({_type: 'reference', _ref: id})
 
-/**
- * Pure assembly of the property draft. Unknown values are OMITTED, not written
- * empty — Studio's own validation then marks what the human must complete.
- * Deviation from the spec noted here: isPublished is set to false explicitly
- * (not left unset) because parts of the frontend gate on `isPublished != false`,
- * where unset counts as published.
- */
-export function buildDraft(input: DraftInput, uuid: string): Record<string, unknown> {
-  const {parsed, refs, validation, agentId, assetIds, coords} = input
-  const f = parsed.facts
-  const titleEn = parsed.editorial.title.en
+export type DraftContentInput = {
+  parsed: ParsedListing
+  refs: ResolvedRefs
+  validation: ValidationResult
+  coords?: {lat: number; lng: number} | null
+}
 
+/**
+ * The content fields shared by draft creation and update patches. Unknown
+ * values are OMITTED, not written empty — Studio's own validation then marks
+ * what the human must complete. Excludes identity (_id/_type/slug), agent,
+ * publish flags, and gallery — those belong to creation / appendGallery.
+ */
+export function draftContentFields(input: DraftContentInput): Record<string, unknown> {
+  const {parsed, refs, validation, coords} = input
+  const f = parsed.facts
   const doc: Record<string, unknown> = {
-    _id: `drafts.property-tg-${uuid}`,
-    _type: 'property',
     title: parsed.editorial.title,
-    slug: {_type: 'slug', current: slugify(titleEn)},
     shortDescription: parsed.editorial.shortDescription,
     description: parsed.editorial.description,
-    agent: ref(agentId),
-    isPublished: false,
-    lifecycleStatus: 'draft',
-    createdAt: new Date().toISOString(),
   }
-
   if (refs.propertyTypeId) doc.type = ref(refs.propertyTypeId)
   if (f.dealType) doc.status = f.dealType
   if (validation.priceEur !== null) doc.price = validation.priceEur
@@ -65,6 +61,31 @@ export function buildDraft(input: DraftInput, uuid: string): Record<string, unkn
   if (refs.amenityIds.length > 0) {
     doc.amenitiesRefs = refs.amenityIds.map((id) => ({...ref(id), _key: id}))
   }
+  return doc
+}
+
+/**
+ * Pure assembly of the property draft. The slug is minted here once and
+ * deliberately never changed by the update flow.
+ * Deviation from the spec noted here: isPublished is set to false explicitly
+ * (not left unset) because parts of the frontend gate on `isPublished != false`,
+ * where unset counts as published.
+ */
+export function buildDraft(input: DraftInput, uuid: string): Record<string, unknown> {
+  const {parsed, agentId, assetIds} = input
+  const titleEn = parsed.editorial.title.en
+
+  const doc: Record<string, unknown> = {
+    _id: `drafts.property-tg-${uuid}`,
+    _type: 'property',
+    ...draftContentFields(input),
+    slug: {_type: 'slug', current: slugify(titleEn)},
+    agent: ref(agentId),
+    isPublished: false,
+    lifecycleStatus: 'draft',
+    createdAt: new Date().toISOString(),
+  }
+
   if (assetIds.length > 0) {
     doc.gallery = assetIds.map((assetId, i) => ({
       _type: 'image',

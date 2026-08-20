@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest'
-import {buildDraft, slugify} from '../buildDraft.js'
+import {buildDraft, draftContentFields, slugify} from '../buildDraft.js'
+import {fullOutcome} from './fixtures/outcome.js'
 import type {ParsedListing, ResolvedRefs, ValidationResult} from '../types.js'
 
 const parsed: ParsedListing = {
@@ -91,5 +92,31 @@ describe('buildDraft', () => {
     expect('status' in bare).toBe(false)
     expect('address' in bare).toBe(false)
     expect('gallery' in bare).toBe(false)
+  })
+})
+
+describe('draftContentFields', () => {
+  it('returns content fields only - no identity/agent/gallery/slug keys', () => {
+    const o = fullOutcome()
+    const fields = draftContentFields({parsed: o.parsed, refs: o.refs, validation: o.validation, coords: null})
+    expect(fields.title).toEqual(o.parsed.editorial.title)
+    expect(fields.price).toBe(145000)
+    expect(fields.status).toBe('sale')
+    expect(fields.city).toEqual({_type: 'reference', _ref: 'c1'})
+    expect(fields).not.toHaveProperty('_id')
+    expect(fields).not.toHaveProperty('_type')
+    expect(fields).not.toHaveProperty('slug')
+    expect(fields).not.toHaveProperty('agent')
+    expect(fields).not.toHaveProperty('gallery')
+    expect(fields).not.toHaveProperty('isPublished')
+  })
+
+  it('omits unknown values instead of writing them empty', () => {
+    const o = fullOutcome()
+    o.refs.cityId = null
+    o.validation.priceEur = null
+    const fields = draftContentFields({parsed: o.parsed, refs: o.refs, validation: o.validation, coords: null})
+    expect(fields).not.toHaveProperty('city')
+    expect(fields).not.toHaveProperty('price')
   })
 })

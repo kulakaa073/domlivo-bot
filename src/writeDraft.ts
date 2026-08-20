@@ -42,3 +42,40 @@ export async function uploadPhotos(
 export async function createDraft(sanity: SanityWriteLike, doc: Record<string, unknown>): Promise<void> {
   await sanity.create(doc)
 }
+
+export type SanityPatchLike = {
+  patch(id: string, ops: Record<string, unknown>): {commit(): Promise<unknown>}
+}
+
+/** Object-form patch (set/unset/setIfMissing/insert) + commit. */
+export async function patchDraft(sanity: SanityPatchLike, id: string, ops: Record<string, unknown>): Promise<void> {
+  await sanity.patch(id, ops).commit()
+}
+
+/**
+ * Appends freshly uploaded photos to the draft's gallery. `existingCount` keys
+ * the new items after the ones already there (tg-0 … tg-{n-1} from creation).
+ */
+export async function appendGallery(
+  sanity: SanityPatchLike,
+  id: string,
+  assetIds: string[],
+  titleEn: string,
+  existingCount: number,
+): Promise<void> {
+  if (assetIds.length === 0) return
+  await sanity.patch(id, {setIfMissing: {gallery: []}}).commit()
+  await sanity
+    .patch(id, {
+      insert: {
+        after: 'gallery[-1]',
+        items: assetIds.map((assetId, i) => ({
+          _type: 'image',
+          _key: `tg-${existingCount + i}`,
+          asset: {_type: 'reference', _ref: assetId},
+          alt: `${titleEn} — photo ${existingCount + i + 1}`,
+        })),
+      },
+    })
+    .commit()
+}
