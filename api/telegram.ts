@@ -4,7 +4,13 @@ import Anthropic from '@anthropic-ai/sdk'
 import {createClient} from '@sanity/client'
 import {loadConfig, type BotConfig} from '../src/config.js'
 import {log, errInfo} from '../src/log.js'
-import {extractIncoming, type TgUpdate, type Incoming} from '../src/telegram/extract.js'
+import {
+  extractIncoming,
+  extractCallback,
+  type TgUpdate,
+  type Incoming,
+  type IncomingCallback,
+} from '../src/telegram/extract.js'
 import {Telegram} from '../src/telegram/api.js'
 import {makeRedis} from '../src/redisClient.js'
 import {isDuplicate, addToGroup, claimGroup, sleep, type GroupItem, type RedisLike} from '../src/assembly.js'
@@ -19,9 +25,18 @@ import {
 } from '../src/sessions.js'
 import {processMessage} from '../src/process.js'
 import {parseListing, type AnthropicLike} from '../src/parseListing.js'
+import {parseUpdate} from '../src/parseUpdate.js'
 import {resolveAgent, fileAccessRequest} from '../src/resolveAgent.js'
 import {BARE_ERROR} from '../src/report.js'
 import {M, pickLang} from '../src/messages.js'
+import {
+  startReview,
+  handleReviewCallback,
+  handleUpdateAnswer,
+  type ReviewDeps,
+  type StartReviewArgs,
+} from '../src/review.js'
+import {loadReview, clearReview} from '../src/reviewState.js'
 
 const GROUP_DEBOUNCE_MS = 3000
 
@@ -55,6 +70,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const incoming = update ? extractIncoming(update) : null
+  const callback = update ? extractCallback(update) : null
+  if (!incoming && !callback) {
+    res.status(200).json({ok: true})
+    return
+  }
+
+  if (callback) {
+    const telegramCb = new Telegram(cfg.config.telegramToken)
+    let deferredCb: Deferred = null
+    try {
+      deferredCb = await handleCallbackUpdate(callback, cfg.config, telegramCb)
+    } catch (e) {
+      log('error', 'callback_failed', {updateId: callback.updateId, senderId: callback.senderId, ...errInfo(e)})
+      await telegramCb.answerCallbackQuery(callback.callbackId)
+    }
+    if (deferredCb) {
+      waitUntil(
+        deferredCb().catch(async (e) => {
+          log('error', 'callback_failed', {updateId: callback.updateId, senderId: callback.senderId, ...errInfo(e)})
+          await telegramCb.sendMessage(callback.chatId, M[pickLang(callback.languageCode)].bareError)
+        }),
+      )
+    }
+    res.status(200).json({ok: true})
+    return
+  }
   if (!incoming) {
     res.status(200).json({ok: true})
     return
@@ -80,6 +121,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   res.status(200).json({ok: true})
 }
 
+function buildReviewDeps(config: BotConfig, telegram: Telegram, idleKeyboard: string[][]): ReviewDeps {
+  const redis = makeRedis(config.upstash)
+  const sanity = createClient({
+    projectId: config.sanity.projectId,
+    dataset: config.sanity.dataset,
+    apiVersion: config.sanity.apiVersion,
+    token: config.sanity.token,
+    useCdn: false,
+  })
+  const anthropic = new Anthropic({apiKey: config.anthropicApiKey}) as unknown as AnthropicLike
+  return {
+    redis,
+    // The SDK client satisfies the structural *Like types at runtime; same
+    // narrowing note as the AnthropicLike cast above.
+    sanity: sanity as unknown as ReviewDeps['sanity'],
+    telegram,
+    parseUpd: (answer, current, missingLbls, newPhotos) =>
+      parseUpdate(anthropic, answer, current, missingLbls, newPhotos),
+    studioBaseUrl: config.studioBaseUrl,
+    idleKeyboard,
+  }
+}
+
+/**
+ * ORDERING: dedupe + duplicate-ack run before the 200; the routing itself
+ * (publish, patch, preview sends) is deferred. handleReviewCallback answers
+ * the callback as its own first step.
+ */
+async function handleCallbackUpdate(cb: IncomingCallback, config: BotConfig, telegram: Telegram): Promise<Deferred> {
+  const redis = makeRedis(config.upstash)
+  if (await isDuplicate(redis, cb.updateId)) {
+    log('info', 'duplicate_update', {updateId: cb.updateId})
+    await telegram.answerCallbackQuery(cb.callbackId)
+    return null
+  }
+  const t = M[pickLang(cb.languageCode)]
+  const deps = buildReviewDeps(config, telegram, [[t.btnAdd, t.btnRestart]])
+  return () => handleReviewCallback(cb, deps)
+}
+
 async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: Telegram): Promise<Deferred> {
   const redis: RedisLike = makeRedis(config.upstash)
   if (await isDuplicate(redis, incoming.updateId)) {
@@ -97,7 +178,7 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
 
   const t = M[pickLang(incoming.languageCode)]
   // State-aware reply keyboard: only buttons that currently do something.
-  const kbAdd = [[t.btnAdd]]
+  const kbAdd = [[t.btnAdd, t.btnRestart]]
   const kbSession = [[t.btnSubmit, t.btnCancel]]
 
   if (incoming.command === '/start') {
@@ -130,12 +211,14 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
   // The SDK client satisfies AnthropicLike at runtime; its stricter param
   // types just aren't structurally assignable, hence the narrowing cast.
   const anthropic = new Anthropic({apiKey: config.anthropicApiKey}) as unknown as AnthropicLike
+  const reviewDeps = buildReviewDeps(config, telegram, kbAdd)
   const deps = {
     studioBaseUrl: config.studioBaseUrl,
     sanity,
     telegram,
     parse: (caption: string, photoCount: number) => parseListing(anthropic, caption, photoCount),
     keyboard: kbAdd, // pipeline replies always end with no open session
+    startReview: (args: StartReviewArgs) => startReview(reviewDeps, args),
   }
 
   const item: GroupItem = {
@@ -165,6 +248,13 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     await closeSession(redis, incoming.senderId)
     log('info', 'session_cancelled', {senderId: incoming.senderId})
     await telegram.sendMessage(incoming.chatId, t.sessionCancelled, {keyboard: kbAdd})
+    return null
+  }
+  if (action === 'restart') {
+    await closeSession(redis, incoming.senderId)
+    await clearReview(redis, incoming.senderId)
+    log('info', 'restarted', {senderId: incoming.senderId})
+    await telegram.sendMessage(incoming.chatId, t.restartDone, {keyboard: kbAdd})
     return null
   }
   if (action === 'submit') {
@@ -198,6 +288,11 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
         await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard: kbSession})
         return
       }
+      const review = await loadReview(redis, incoming.senderId)
+      if (review?.mode === 'updating') {
+        await handleUpdateAnswer(albumItems, reviewDeps)
+        return
+      }
       await processMessage(albumItems, deps)
     }
   }
@@ -210,6 +305,13 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     const {photos, texts} = tally(collected)
     await telegram.sendMessage(incoming.chatId, t.sessionTally(photos, texts), {keyboard: kbSession})
     return null
+  }
+
+  // Update-mode answer: the next message from a sender whose review is in
+  // 'updating' belongs to the review flow, not the intake pipeline.
+  const review = await loadReview(redis, incoming.senderId)
+  if (review?.mode === 'updating') {
+    return () => handleUpdateAnswer([item], reviewDeps)
   }
 
   // No session: the original quick path — one message in, draft out.
