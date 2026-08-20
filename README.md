@@ -4,9 +4,19 @@ Telegram property-intake bot for DomLivo. Agents DM the bot an album of photos
 with the listing text as the caption; the bot parses it with one Claude call,
 translates to en/uk/ru/sq/it, uploads the photos, and creates a **draft**
 `property` in Sanity, replying with what it understood, what's missing, and a
-Studio link. Publishing is manual in Studio.
+Studio link.
 
-Spec: `domlivo-workspace/docs/engineering/SPEC-telegram-bot-2026-08-15.md`.
+After the draft, the bot sends a **preview** of the listing as the site would
+render it, with inline buttons: **✏️ Update** asks for the missing fields,
+reads the agent's next message (text and/or photos), patches the draft, and
+re-previews; **🚀 Post** publishes the draft (code-side gate: title, price,
+deal, type, city, ≥1 photo) and replies with the live site URL. Post only
+appears when `botAllowPublish` is on in Studio settings. `🔄 Restart` (or
+`/restart`) resets bot state from any point — it never deletes anything in
+Studio.
+
+Spec: `domlivo-workspace/docs/engineering/SPEC-telegram-bot-2026-08-15.md` and
+`SPEC-bot-review-flow-2026-08-20.md` (preview/Update/Post/restart).
 Plan: `domlivo-workspace/docs/engineering/PLAN-telegram-bot-2026-08-16.md`.
 Deployed on Vercel as its own project; webhook at `/api/telegram`.
 
@@ -29,8 +39,13 @@ The webhook always returns 200 so Telegram never retry-storms.
 | `SANITY_DATASET` | no (default `production`) | override only for a test dataset |
 
 All secrets live on the Vercel project. Behavioral config (`botEnabled`
-kill-switch, `botOwnerTelegramUserId`, `botDefaultAgent`, per-agent
-`telegramUserId`) lives in Sanity Site Settings / Agent documents.
+kill-switch, `botOwnerTelegramUserId`, `botDefaultAgent`, `siteBaseUrl`,
+`botAllowPublish` publish kill-switch, per-agent `telegramUserId`) lives in
+Sanity Site Settings / Agent documents.
+
+The webhook must be registered with `allowed_updates: ['message',
+'callback_query']` (the set-webhook script does this) — inline buttons stay
+dead until `npm run set-webhook` has been re-run after the review-flow deploy.
 
 ## Deploy
 
