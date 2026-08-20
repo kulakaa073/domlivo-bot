@@ -180,6 +180,8 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
   // State-aware reply keyboard: only buttons that currently do something.
   const kbAdd = [[t.btnAdd, t.btnRestart]]
   const kbSession = [[t.btnSubmit, t.btnCancel]]
+  // While a review is open the only way out is finishing it (inline buttons) or Restart.
+  const kbReview = [[t.btnRestart]]
 
   if (incoming.command === '/start') {
     const auth = await resolveAgent(sanity, incoming.senderId)
@@ -203,7 +205,11 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
       msg = t.requestRecorded
     }
     await telegram.sendMessage(incoming.chatId, msg, {
-      keyboard: (await isSessionOpen(redis, incoming.senderId)) ? kbSession : kbAdd,
+      keyboard: (await isSessionOpen(redis, incoming.senderId))
+        ? kbSession
+        : (await loadReview(redis, incoming.senderId))
+          ? kbReview
+          : kbAdd,
     })
     return null
   }
@@ -237,6 +243,11 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
     if (auth.kind !== 'ok') {
       const msg = auth.kind === 'disabled' ? t.disabled : auth.kind === 'pending' ? t.pending : t.refusal
       await telegram.sendMessage(incoming.chatId, msg, {keyboard: kbAdd})
+      return null
+    }
+    // One listing at a time: no new intake while a review is open.
+    if (await loadReview(redis, incoming.senderId)) {
+      await telegram.sendMessage(incoming.chatId, t.reviewOpen, {keyboard: kbReview})
       return null
     }
     await openSession(redis, incoming.senderId)
@@ -293,6 +304,12 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
         await handleUpdateAnswer(albumItems, reviewDeps)
         return
       }
+      if (review) {
+        // One listing at a time: content while reviewing is neither a new
+        // listing nor an update answer — point back at the open review.
+        await telegram.sendMessage(incoming.chatId, t.reviewOpen, {keyboard: kbReview})
+        return
+      }
       await processMessage(albumItems, deps)
     }
   }
@@ -312,6 +329,12 @@ async function handleIncoming(incoming: Incoming, config: BotConfig, telegram: T
   const review = await loadReview(redis, incoming.senderId)
   if (review?.mode === 'updating') {
     return () => handleUpdateAnswer([item], reviewDeps)
+  }
+  if (review) {
+    // One listing at a time: content while reviewing is neither a new listing
+    // nor an update answer — point back at the open review.
+    await telegram.sendMessage(incoming.chatId, t.reviewOpen, {keyboard: kbReview})
+    return null
   }
 
   // No session: the original quick path — one message in, draft out.

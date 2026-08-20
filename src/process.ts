@@ -124,7 +124,11 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
     deps.studioBaseUrl,
     lang,
   )
-  await deps.telegram.sendMessage(chatId, reply, {keyboard: deps.keyboard})
+  // A successful draft opens a review — the reply keyboard drops ➕ Add
+  // property (one listing at a time) and keeps only 🔄 Restart.
+  await deps.telegram.sendMessage(chatId, reply, {
+    keyboard: deps.startReview ? [[t.btnRestart]] : deps.keyboard,
+  })
 
   if (deps.startReview) {
     await deps.startReview({

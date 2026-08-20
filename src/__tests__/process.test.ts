@@ -114,4 +114,22 @@ describe('processMessage', () => {
     expect(args.draftId).toMatch(/^drafts\.property-tg-/)
     expect(args.data.photoCount).toBe(2)
   })
+
+  it('drops the Add button from the success reply keyboard when a review opens', async () => {
+    const keyboards: unknown[] = []
+    const {d} = deps({
+      startReview: async () => {},
+      telegram: {
+        sendMessage: async (_c: number, _text: string, opts?: {keyboard?: string[][]}) => {
+          keyboards.push(opts?.keyboard)
+          return 1
+        },
+        downloadFile: async () => Buffer.from('img'),
+      } as never,
+      keyboard: [['➕ Add property', '🔄 Restart']],
+    })
+    await processMessage(items, d)
+    // last message is the report — Restart only; earlier acks keep the idle keyboard
+    expect(keyboards[keyboards.length - 1]).toEqual([['🔄 Restart']])
+  })
 })

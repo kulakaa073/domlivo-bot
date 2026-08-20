@@ -68,6 +68,7 @@ export type Messages = {
   postDisabled: string
   postGone: string
   staleButton: string
+  reviewOpen: string
 }
 
 export const M: Record<Lang, Messages> = {
@@ -145,6 +146,8 @@ export const M: Record<Lang, Messages> = {
     postDisabled: "Publishing from the bot is switched off. Ask the site owner to enable it in Studio settings.",
     postGone: "This draft no longer exists in Studio — it may have been published or deleted already.",
     staleButton: "This draft is no longer in review — open it in Studio.",
+    reviewOpen:
+      "This listing is still under review — press ✏️ Update or 🚀 Post on the preview above, or 🔄 Restart to abandon it and start fresh.",
   },
 
   uk: {
@@ -221,6 +224,8 @@ export const M: Record<Lang, Messages> = {
     postDisabled: "Публікацію з бота вимкнено. Попросіть власника сайту увімкнути її в налаштуваннях Studio.",
     postGone: "Цієї чернетки вже немає в Studio — можливо, її вже опубліковано або видалено.",
     staleButton: "Ця чернетка вже не на перегляді — відкрийте її в Studio.",
+    reviewOpen:
+      "Попереднє оголошення ще на перегляді — натисніть ✏️ Доповнити чи 🚀 Опублікувати під прев'ю вище, або 🔄 Спочатку, щоб почати заново.",
   },
 
   ru: {
@@ -297,6 +302,8 @@ export const M: Record<Lang, Messages> = {
     postDisabled: "Публикация из бота выключена. Попросите владельца сайта включить её в настройках Studio.",
     postGone: "Этого черновика больше нет в Studio — возможно, он уже опубликован или удалён.",
     staleButton: "Этот черновик уже не на просмотре — откройте его в Studio.",
+    reviewOpen:
+      "Предыдущее объявление ещё на просмотре — нажмите ✏️ Дополнить или 🚀 Опубликовать под превью выше, либо 🔄 Сначала, чтобы начать заново.",
   },
 
   sq: {
@@ -373,6 +380,8 @@ export const M: Record<Lang, Messages> = {
     postDisabled: "Publikimi nga boti është i fikur. Kërkojini pronarit të faqes ta aktivizojë te cilësimet e Studio-s.",
     postGone: "Ky draft nuk ekziston më në Studio — mund të jetë publikuar ose fshirë tashmë.",
     staleButton: "Ky draft nuk është më në shqyrtim — hapeni në Studio.",
+    reviewOpen:
+      "Njoftimi i mëparshëm është ende në shqyrtim — shtypni ✏️ Plotëso ose 🚀 Publiko te parapamja më lart, ose 🔄 Rifillo për të filluar nga e para.",
   },
 
   it: {
@@ -449,5 +458,7 @@ export const M: Record<Lang, Messages> = {
     postDisabled: "La pubblicazione dal bot è disattivata. Chiedi al proprietario del sito di attivarla nelle impostazioni di Studio.",
     postGone: "Questa bozza non esiste più in Studio — potrebbe essere già stata pubblicata o eliminata.",
     staleButton: "Questa bozza non è più in revisione — aprila in Studio.",
+    reviewOpen:
+      "L'annuncio precedente è ancora in revisione — premi ✏️ Completa o 🚀 Pubblica sull'anteprima sopra, oppure 🔄 Ricomincia per ripartire da zero.",
   },
 }
