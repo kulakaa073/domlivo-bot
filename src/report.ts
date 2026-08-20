@@ -1,5 +1,6 @@
 import type {Outcome} from './types.js'
 import {M, type Lang} from './messages.js'
+import {computeMissing, missingLabels} from './missing.js'
 
 // English aliases kept for tests and log-side references.
 export const BARE_ERROR = M.en.bareError
@@ -28,15 +29,7 @@ export function buildReply(o: Outcome, studioBaseUrl: string, lang: Lang = 'en')
     `${o.photoCount} ${t.photosWord}`,
   ].filter(Boolean)
 
-  const missing: string[] = []
-  if (!o.parsed.editorial.title.en) missing.push(t.fields.title)
-  if (o.validation.priceEur === null) missing.push(t.fields.price)
-  if (!f.dealType) missing.push(t.fields.deal)
-  if (!o.refs.propertyTypeId) missing.push(t.fields.type)
-  if (!o.refs.cityId) missing.push(t.fields.city)
-  if (f.areaM2 === null) missing.push(t.fields.area)
-  if (f.bedrooms === null) missing.push(t.fields.bedrooms)
-  if (o.photoCount === 0) missing.push(t.fields.photos)
+  const missing = missingLabels(computeMissing(o), t)
 
   const problems = [
     ...(missing.length ? [`${t.missingLabel}: ${missing.join(', ')}`] : []),
