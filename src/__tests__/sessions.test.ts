@@ -96,3 +96,12 @@ describe('detectAction', () => {
     expect(detectAction('')).toBeNull()
   })
 })
+
+describe('detectAction restart', () => {
+  it('detects the restart button and /restart command', () => {
+    expect(detectAction('🔄 Restart')).toBe('restart')
+    expect(detectAction('🔄 Сначала')).toBe('restart')
+    expect(detectAction('/restart')).toBe('restart')
+    expect(detectAction('please restart')).toBeNull()
+  })
+})

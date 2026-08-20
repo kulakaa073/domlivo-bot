@@ -39,7 +39,7 @@ export function tally(items: GroupItem[]): {photos: number; texts: number} {
   }
 }
 
-export type SessionAction = 'add' | 'submit' | 'cancel'
+export type SessionAction = 'add' | 'submit' | 'cancel' | 'restart'
 
 /**
  * Reply-keyboard presses arrive as plain text carrying the localized label.
@@ -50,5 +50,6 @@ export function detectAction(text: string | null): SessionAction | null {
   if (s.startsWith('➕') || s.startsWith('/new')) return 'add'
   if (s.startsWith('✅') || s.startsWith('/submit')) return 'submit'
   if (s.startsWith('❌') || s.startsWith('/cancel')) return 'cancel'
+  if (s.startsWith('🔄') || s.startsWith('/restart')) return 'restart'
   return null
 }
