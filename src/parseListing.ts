@@ -11,6 +11,44 @@ export type AnthropicLike = {
   }
 }
 
+/** JSON schema for the facts block — shared by the full parse and the update parse. */
+export const FACTS_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  properties: {
+    price: {
+      anyOf: [
+        {type: 'null'},
+        {
+          type: 'object',
+          properties: {
+            amount: {type: 'number'},
+            currency: {enum: ['EUR', 'ALL', 'USD']},
+            period: {enum: ['total', 'per_m2', 'per_month']},
+          },
+          required: ['amount', 'currency', 'period'],
+          additionalProperties: false,
+        },
+      ],
+    },
+    dealType: {anyOf: [{type: 'null'}, {enum: ['sale', 'rent']}]},
+    areaM2: {type: ['number', 'null']},
+    bedrooms: {type: ['integer', 'null']},
+    bathrooms: {type: ['integer', 'null']},
+    floor: {type: ['integer', 'null']},
+    yearBuilt: {type: ['integer', 'null']},
+    propertyTypeName: {type: ['string', 'null']},
+    cityName: {type: ['string', 'null']},
+    districtName: {type: ['string', 'null']},
+    address: {type: ['string', 'null']},
+    amenityNames: {type: 'array', items: {type: 'string'}},
+  },
+  required: [
+    'price', 'dealType', 'areaM2', 'bedrooms', 'bathrooms', 'floor', 'yearBuilt',
+    'propertyTypeName', 'cityName', 'districtName', 'address', 'amenityNames',
+  ],
+  additionalProperties: false,
+}
+
 export function buildListingSchema(locales: readonly string[]): Record<string, unknown> {
   const LOCALE_STRING = localeObjectSchema(locales)
   return buildSchemaBody(LOCALE_STRING)
@@ -27,42 +65,7 @@ function SCHEMA_TEMPLATE(LOCALE_STRING: Record<string, unknown>): Record<string,
   return {
   type: 'object',
   properties: {
-    facts: {
-      type: 'object',
-      properties: {
-        price: {
-          anyOf: [
-            {type: 'null'},
-            {
-              type: 'object',
-              properties: {
-                amount: {type: 'number'},
-                currency: {enum: ['EUR', 'ALL', 'USD']},
-                period: {enum: ['total', 'per_m2', 'per_month']},
-              },
-              required: ['amount', 'currency', 'period'],
-              additionalProperties: false,
-            },
-          ],
-        },
-        dealType: {anyOf: [{type: 'null'}, {enum: ['sale', 'rent']}]},
-        areaM2: {type: ['number', 'null']},
-        bedrooms: {type: ['integer', 'null']},
-        bathrooms: {type: ['integer', 'null']},
-        floor: {type: ['integer', 'null']},
-        yearBuilt: {type: ['integer', 'null']},
-        propertyTypeName: {type: ['string', 'null']},
-        cityName: {type: ['string', 'null']},
-        districtName: {type: ['string', 'null']},
-        address: {type: ['string', 'null']},
-        amenityNames: {type: 'array', items: {type: 'string'}},
-      },
-      required: [
-        'price', 'dealType', 'areaM2', 'bedrooms', 'bathrooms', 'floor', 'yearBuilt',
-        'propertyTypeName', 'cityName', 'districtName', 'address', 'amenityNames',
-      ],
-      additionalProperties: false,
-    },
+    facts: FACTS_SCHEMA,
     editorial: {
       type: 'object',
       properties: {title: LOCALE_STRING, shortDescription: LOCALE_STRING, description: LOCALE_STRING},
