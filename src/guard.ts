@@ -54,3 +54,17 @@ export function screenCaption(caption: string): GuardVerdict {
 
   return {ok: true}
 }
+
+/**
+ * Lighter screen for update-mode answers: these are legitimately short
+ * ("price 120000", "3"), so only emptiness, size, and injection are checked.
+ */
+export function screenAnswer(answer: string): GuardVerdict {
+  const s = answer.trim()
+  if (s.length < 1) return {ok: false, reason: 'empty'}
+  if (s.length > MAX_CHARS) return {ok: false, reason: 'too_long'}
+  for (const p of INJECTION_PATTERNS) {
+    if (p.test(s)) return {ok: false, reason: 'injection_pattern'}
+  }
+  return {ok: true}
+}
