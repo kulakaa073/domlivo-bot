@@ -43,6 +43,31 @@ export type Messages = {
     bedrooms: string
     photos: string
   }
+  btnUpdate: string
+  btnPost: string
+  btnRestart: string
+  restartDone: string
+  pvPhotos: (n: number) => string
+  pvPinSet: string
+  pvPinNotSet: string
+  pvBuilt: (y: number) => string
+  pvFloor: (n: number) => string
+  pvAmenities: string
+  pvShortDescription: string
+  pvDescription: string
+  pvTruncated: string
+  pvForSale: string
+  pvForRent: string
+  updAskMissing: (fields: string) => string
+  updAskFree: string
+  updNothingParsed: string
+  updResumed: string
+  postBlocked: (fields: string) => string
+  postPublished: string
+  postNoBaseUrl: string
+  postDisabled: string
+  postGone: string
+  staleButton: string
 }
 
 export const M: Record<Lang, Messages> = {
@@ -91,6 +116,35 @@ export const M: Record<Lang, Messages> = {
       bedrooms: "bedrooms",
       photos: "photos",
     },
+    btnUpdate: "✏️ Update",
+    btnPost: "🚀 Post",
+    btnRestart: "🔄 Restart",
+    restartDone: "Fresh start — nothing was deleted from Studio.",
+    pvPhotos: (n) => `🖼 ${n} photo(s) uploaded`,
+    pvPinSet: "📍 Map pin set",
+    pvPinNotSet: "📍 Map pin not set",
+    pvBuilt: (y) => `📅 Built ${y}`,
+    pvFloor: (n) => `🏢 Floor ${n}`,
+    pvAmenities: "🔑 Amenities",
+    pvShortDescription: "Short description",
+    pvDescription: "Description",
+    pvTruncated: "… (full text in Studio)",
+    pvForSale: "For sale",
+    pvForRent: "For rent",
+    updAskMissing: (fields) =>
+      `Please send the missing info in one message: ${fields}. You can also attach more photos.`,
+    updAskFree:
+      "Send the corrections in one message (e.g. “price 120000, 3 bedrooms”). You can also attach more photos.",
+    updNothingParsed:
+      "I couldn't read any listing fields from that — try “price 120000”, or press ❌ Cancel.",
+    updResumed: "OK — back to review.",
+    postBlocked: (fields) => `Cannot publish yet — missing: ${fields}. Press ✏️ Update to add them.`,
+    postPublished: "Published 🎉 — it may take a minute to appear:",
+    postNoBaseUrl:
+      "Published 🎉 — set “Site Base URL” in Studio settings to get live links here. Studio link:",
+    postDisabled: "Publishing from the bot is switched off. Ask the site owner to enable it in Studio settings.",
+    postGone: "This draft no longer exists in Studio — it may have been published or deleted already.",
+    staleButton: "This draft is no longer in review — open it in Studio.",
   },
 
   uk: {
@@ -138,6 +192,35 @@ export const M: Record<Lang, Messages> = {
       bedrooms: "спальні",
       photos: "фотографії",
     },
+    btnUpdate: "✏️ Доповнити",
+    btnPost: "🚀 Опублікувати",
+    btnRestart: "🔄 Спочатку",
+    restartDone: "Починаємо заново — у Studio нічого не видалено.",
+    pvPhotos: (n) => `🖼 Фото завантажено: ${n}`,
+    pvPinSet: "📍 Мітку на мапі встановлено",
+    pvPinNotSet: "📍 Мітки на мапі немає",
+    pvBuilt: (y) => `📅 Рік побудови: ${y}`,
+    pvFloor: (n) => `🏢 Поверх: ${n}`,
+    pvAmenities: "🔑 Зручності",
+    pvShortDescription: "Короткий опис",
+    pvDescription: "Опис",
+    pvTruncated: "… (повний текст у Studio)",
+    pvForSale: "Продаж",
+    pvForRent: "Оренда",
+    updAskMissing: (fields) =>
+      `Надішліть, будь ласка, одним повідомленням: ${fields}. Можна також додати фото.`,
+    updAskFree:
+      "Надішліть виправлення одним повідомленням (напр. «ціна 120000, 3 спальні»). Можна також додати фото.",
+    updNothingParsed:
+      "Не вдалося розпізнати жодного поля — спробуйте «ціна 120000» або натисніть ❌ Скасувати.",
+    updResumed: "Гаразд — повертаємось до перегляду.",
+    postBlocked: (fields) => `Опублікувати ще не можна — бракує: ${fields}. Натисніть ✏️ Доповнити.`,
+    postPublished: "Опубліковано 🎉 — сторінка з'явиться протягом хвилини:",
+    postNoBaseUrl:
+      "Опубліковано 🎉 — задайте «Site Base URL» у налаштуваннях Studio, щоб отримувати живі посилання. Посилання на Studio:",
+    postDisabled: "Публікацію з бота вимкнено. Попросіть власника сайту увімкнути її в налаштуваннях Studio.",
+    postGone: "Цієї чернетки вже немає в Studio — можливо, її вже опубліковано або видалено.",
+    staleButton: "Ця чернетка вже не на перегляді — відкрийте її в Studio.",
   },
 
   ru: {
@@ -185,6 +268,35 @@ export const M: Record<Lang, Messages> = {
       bedrooms: "спальни",
       photos: "фотографии",
     },
+    btnUpdate: "✏️ Дополнить",
+    btnPost: "🚀 Опубликовать",
+    btnRestart: "🔄 Сначала",
+    restartDone: "Начинаем заново — в Studio ничего не удалено.",
+    pvPhotos: (n) => `🖼 Фото загружено: ${n}`,
+    pvPinSet: "📍 Метка на карте установлена",
+    pvPinNotSet: "📍 Метки на карте нет",
+    pvBuilt: (y) => `📅 Год постройки: ${y}`,
+    pvFloor: (n) => `🏢 Этаж: ${n}`,
+    pvAmenities: "🔑 Удобства",
+    pvShortDescription: "Краткое описание",
+    pvDescription: "Описание",
+    pvTruncated: "… (полный текст в Studio)",
+    pvForSale: "Продажа",
+    pvForRent: "Аренда",
+    updAskMissing: (fields) =>
+      `Пришлите недостающее одним сообщением: ${fields}. Можно также приложить фото.`,
+    updAskFree:
+      "Пришлите исправления одним сообщением (напр. «цена 120000, 3 спальни»). Можно также приложить фото.",
+    updNothingParsed:
+      "Не удалось распознать ни одного поля — попробуйте «цена 120000» или нажмите ❌ Отменить.",
+    updResumed: "Хорошо — возвращаемся к просмотру.",
+    postBlocked: (fields) => `Опубликовать пока нельзя — не хватает: ${fields}. Нажмите ✏️ Дополнить.`,
+    postPublished: "Опубликовано 🎉 — страница появится в течение минуты:",
+    postNoBaseUrl:
+      "Опубликовано 🎉 — задайте «Site Base URL» в настройках Studio, чтобы получать живые ссылки. Ссылка на Studio:",
+    postDisabled: "Публикация из бота выключена. Попросите владельца сайта включить её в настройках Studio.",
+    postGone: "Этого черновика больше нет в Studio — возможно, он уже опубликован или удалён.",
+    staleButton: "Этот черновик уже не на просмотре — откройте его в Studio.",
   },
 
   sq: {
@@ -232,6 +344,35 @@ export const M: Record<Lang, Messages> = {
       bedrooms: "dhomat e gjumit",
       photos: "fotot",
     },
+    btnUpdate: "✏️ Plotëso",
+    btnPost: "🚀 Publiko",
+    btnRestart: "🔄 Rifillo",
+    restartDone: "Fillim i ri — asgjë nuk u fshi nga Studio.",
+    pvPhotos: (n) => `🖼 Foto të ngarkuara: ${n}`,
+    pvPinSet: "📍 Pika në hartë u vendos",
+    pvPinNotSet: "📍 Pika në hartë mungon",
+    pvBuilt: (y) => `📅 Ndërtuar më ${y}`,
+    pvFloor: (n) => `🏢 Kati: ${n}`,
+    pvAmenities: "🔑 Pajisjet",
+    pvShortDescription: "Përshkrim i shkurtër",
+    pvDescription: "Përshkrimi",
+    pvTruncated: "… (teksti i plotë në Studio)",
+    pvForSale: "Në shitje",
+    pvForRent: "Me qira",
+    updAskMissing: (fields) =>
+      `Ju lutem dërgoni me një mesazh të vetëm: ${fields}. Mund të shtoni edhe foto.`,
+    updAskFree:
+      "Dërgoni korrigjimet me një mesazh (p.sh. «çmimi 120000, 3 dhoma gjumi»). Mund të shtoni edhe foto.",
+    updNothingParsed:
+      "Nuk munda të lexoj asnjë fushë — provoni «çmimi 120000» ose shtypni ❌ Anulo.",
+    updResumed: "Në rregull — kthehemi te shqyrtimi.",
+    postBlocked: (fields) => `Nuk mund të publikohet ende — mungon: ${fields}. Shtypni ✏️ Plotëso.`,
+    postPublished: "U publikua 🎉 — faqja shfaqet brenda një minute:",
+    postNoBaseUrl:
+      "U publikua 🎉 — vendosni «Site Base URL» te cilësimet e Studio-s për lidhje të drejtpërdrejta. Lidhja e Studio-s:",
+    postDisabled: "Publikimi nga boti është i fikur. Kërkojini pronarit të faqes ta aktivizojë te cilësimet e Studio-s.",
+    postGone: "Ky draft nuk ekziston më në Studio — mund të jetë publikuar ose fshirë tashmë.",
+    staleButton: "Ky draft nuk është më në shqyrtim — hapeni në Studio.",
   },
 
   it: {
@@ -279,5 +420,34 @@ export const M: Record<Lang, Messages> = {
       bedrooms: "camere da letto",
       photos: "foto",
     },
+    btnUpdate: "✏️ Completa",
+    btnPost: "🚀 Pubblica",
+    btnRestart: "🔄 Ricomincia",
+    restartDone: "Si ricomincia — nulla è stato eliminato da Studio.",
+    pvPhotos: (n) => `🖼 Foto caricate: ${n}`,
+    pvPinSet: "📍 Punto sulla mappa impostato",
+    pvPinNotSet: "📍 Punto sulla mappa mancante",
+    pvBuilt: (y) => `📅 Costruito nel ${y}`,
+    pvFloor: (n) => `🏢 Piano: ${n}`,
+    pvAmenities: "🔑 Servizi",
+    pvShortDescription: "Descrizione breve",
+    pvDescription: "Descrizione",
+    pvTruncated: "… (testo completo in Studio)",
+    pvForSale: "In vendita",
+    pvForRent: "In affitto",
+    updAskMissing: (fields) =>
+      `Invia le informazioni mancanti in un unico messaggio: ${fields}. Puoi anche allegare altre foto.`,
+    updAskFree:
+      "Invia le correzioni in un unico messaggio (es. «prezzo 120000, 3 camere»). Puoi anche allegare altre foto.",
+    updNothingParsed:
+      "Non sono riuscito a leggere alcun campo — prova «prezzo 120000» o premi ❌ Annulla.",
+    updResumed: "Va bene — torniamo alla revisione.",
+    postBlocked: (fields) => `Non si può ancora pubblicare — manca: ${fields}. Premi ✏️ Completa.`,
+    postPublished: "Pubblicato 🎉 — la pagina apparirà entro un minuto:",
+    postNoBaseUrl:
+      "Pubblicato 🎉 — imposta «Site Base URL» nelle impostazioni di Studio per ricevere link diretti. Link a Studio:",
+    postDisabled: "La pubblicazione dal bot è disattivata. Chiedi al proprietario del sito di attivarla nelle impostazioni di Studio.",
+    postGone: "Questa bozza non esiste più in Studio — potrebbe essere già stata pubblicata o eliminata.",
+    staleButton: "Questa bozza non è più in revisione — aprila in Studio.",
   },
 }
