@@ -10,6 +10,39 @@ export type TgUpdate = {
     photo?: Array<{file_id: string; width: number; height: number; file_size?: number}>
     document?: {file_id: string; mime_type?: string; file_name?: string}
   }
+  callback_query?: {
+    id: string
+    from?: {id: number; is_bot?: boolean; language_code?: string}
+    message?: {message_id: number; chat?: {id: number; type: string}}
+    data?: string
+  }
+}
+
+/** An inline-button press, with enough context to answer and edit the message. */
+export type IncomingCallback = {
+  updateId: number
+  callbackId: string
+  data: string
+  chatId: number
+  senderId: number
+  messageId: number
+  languageCode: string | null
+}
+
+export function extractCallback(update: TgUpdate): IncomingCallback | null {
+  const cb = update.callback_query
+  if (!cb || !cb.from || cb.from.is_bot || !cb.data) return null
+  const msg = cb.message
+  if (!msg || !msg.chat || msg.chat.type !== 'private') return null
+  return {
+    updateId: update.update_id,
+    callbackId: cb.id,
+    data: cb.data,
+    chatId: msg.chat.id,
+    senderId: cb.from.id,
+    messageId: msg.message_id,
+    languageCode: cb.from.language_code ?? null,
+  }
 }
 
 export type Incoming = {
