@@ -44,7 +44,7 @@ describe('buildDraft', () => {
   })
 
   it('fills required schema fields', () => {
-    expect(doc.title).toEqual(parsed.editorial.title)
+    expect(doc.title).toEqual({_type: 'localizedString', ...parsed.editorial.title})
     expect(doc.slug).toEqual({_type: 'slug', current: '2-1-apartment-in-parruce-shkoder'})
     expect(doc.agent).toEqual({_type: 'reference', _ref: 'agent-1'})
     expect(doc.type).toEqual({_type: 'reference', _ref: 'pt-apartment'})
@@ -99,7 +99,8 @@ describe('draftContentFields', () => {
   it('returns content fields only - no identity/agent/gallery/slug keys', () => {
     const o = fullOutcome()
     const fields = draftContentFields({parsed: o.parsed, refs: o.refs, validation: o.validation, coords: null})
-    expect(fields.title).toEqual(o.parsed.editorial.title)
+    expect(fields.title).toEqual({_type: 'localizedString', ...o.parsed.editorial.title})
+    expect(fields.description).toEqual({_type: 'localizedText', ...o.parsed.editorial.description})
     expect(fields.price).toBe(145000)
     expect(fields.status).toBe('sale')
     expect(fields.city).toEqual({_type: 'reference', _ref: 'c1'})

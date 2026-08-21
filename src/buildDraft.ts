@@ -39,10 +39,13 @@ export type DraftContentInput = {
 export function draftContentFields(input: DraftContentInput): Record<string, unknown> {
   const {parsed, refs, validation, coords} = input
   const f = parsed.facts
+  // `_type` is stamped so Studio tooling that discovers localized fields by
+  // value shape (e.g. the Translate document action) sees these — Sanity
+  // accepts the objects without it, but only the form editor would heal it.
   const doc: Record<string, unknown> = {
-    title: parsed.editorial.title,
-    shortDescription: parsed.editorial.shortDescription,
-    description: parsed.editorial.description,
+    title: {_type: 'localizedString', ...parsed.editorial.title},
+    shortDescription: {_type: 'localizedText', ...parsed.editorial.shortDescription},
+    description: {_type: 'localizedText', ...parsed.editorial.description},
   }
   if (refs.propertyTypeId) doc.type = ref(refs.propertyTypeId)
   if (f.dealType) doc.status = f.dealType
