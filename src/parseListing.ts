@@ -84,7 +84,7 @@ const SYSTEM_PROMPT_TEMPLATE = `You parse property listing messages for DomLivo,
 
 Rules for facts:
 - Extract ONLY what the text states. Return null for anything not stated. Never guess or infer.
-- Albanian room notation: "2+1" means 2 bedrooms + 1 living room, so bedrooms = 2. "garsonierë"/"garsoniere" means a studio: bedrooms = 0, propertyTypeName "Studio".
+- Albanian room notation: "2+1" means 2 bedrooms + 1 living room, so bedrooms = 2. "garsonierë"/"garsoniere"/studio means a studio apartment: bedrooms = 1 (DomLivo convention — the single living/sleeping room counts as one bedroom), propertyTypeName "Studio".
 - price: report the amount and currency exactly as written (lek/lekë/L means ALL). Do NOT convert currencies. period: "per_month" for rentals quoted monthly, "per_m2" if quoted per square metre, otherwise "total".
 - cityName / districtName / propertyTypeName: the name as commonly written in Latin-script Albanian (e.g. "Shkodër", "Parrucë", "Apartament").
 - amenityNames: short English names, e.g. "Elevator", "Parking", "Balcony", "Sea view".
