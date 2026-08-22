@@ -21,7 +21,8 @@ const parsed: ParsedListing = {
 
 const refs: ResolvedRefs = {
   propertyTypeId: 'pt-apartment', cityId: 'city-shkoder',
-  districtId: 'district-parruce', amenityIds: ['amenity-elevator'], unmatched: [],
+  districtId: 'district-parruce', amenityIds: ['amenity-elevator'],
+    looseAmenities: [], unmatched: [],
 }
 
 const validation: ValidationResult = {priceEur: 59000, warnings: []}

@@ -127,10 +127,13 @@ describe('resolveRefs — wording found in real listings (2026-08-22)', () => {
     expect(r.unmatched.some((u) => u.includes('Sea and mountain view'))).toBe(true)
   })
 
-  it('leaves a genuinely new amenity unmatched for the review queue', async () => {
+  it('leaves a genuinely new amenity unmatched, while guessing the synonym', async () => {
+    // "Private pool" reaches Swimming Pool through the loose pass and is reported
+    // for checking; "Sauna" shares nothing with the catalogue, so intake creates it.
     const r = await resolveRefs(realSanity, facts({amenityNames: ['Private pool', 'Sauna']}))
-    expect(r.amenityIds).toEqual([])
-    expect(r.unmatched).toHaveLength(2)
+    expect(r.amenityIds).toEqual(['amenity-pool'])
+    expect(r.looseAmenities).toEqual([{name: 'Private pool', id: 'amenity-pool'}])
+    expect(r.unmatched).toEqual(['amenity "Sauna"'])
   })
 })
 
@@ -160,5 +163,50 @@ describe('aliases', () => {
     const r = await resolveRefs({fetch: async () => clashing}, facts({amenityNames: ['Water']}))
     expect(r.amenityIds).toEqual([])
     expect(r.unmatched).toHaveLength(1)
+  })
+})
+
+describe('loose amenity matching — a distinctive shared word', () => {
+  const catalogue = {
+    ...realistic,
+    amenities: [
+      {_id: 'amenity-pool', title: {en: 'Swimming Pool', sq: 'Pishinë'}, slug: 'swimming-pool'},
+      {_id: 'amenity-storage-room', title: {en: 'Storage Room'}, slug: 'storage-room'},
+      {_id: 'amenity-sea-view', title: {en: 'Sea View'}, slug: 'sea-view'},
+      {_id: 'amenity-mountain-view', title: {en: 'Mountain View'}, slug: 'mountain-view'},
+    ],
+  }
+  const run = (name: string) => resolveRefs({fetch: async () => catalogue}, facts({amenityNames: [name]}))
+
+  it('links "Private pool" to Swimming Pool and reports it for checking', async () => {
+    const r = await run('Private pool')
+    expect(r.amenityIds).toEqual(['amenity-pool'])
+    expect(r.looseAmenities).toEqual([{name: 'Private pool', id: 'amenity-pool'}])
+    expect(r.unmatched).toEqual([])
+  })
+
+  it('refuses "Game room" — "room" is a generic container word, not a signal', async () => {
+    const r = await run('Game room')
+    expect(r.amenityIds).toEqual([])
+    expect(r.looseAmenities).toEqual([])
+    expect(r.unmatched).toHaveLength(1)
+  })
+
+  it('refuses a word two amenities share', async () => {
+    const r = await run('Panoramic view')
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched).toHaveLength(1)
+  })
+
+  it('leaves a name with nothing in common unmatched', async () => {
+    const r = await run('Sauna')
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched).toHaveLength(1)
+  })
+
+  it('never reports a confident match as loose', async () => {
+    const r = await run('Swimming pool')
+    expect(r.amenityIds).toEqual(['amenity-pool'])
+    expect(r.looseAmenities).toEqual([])
   })
 })

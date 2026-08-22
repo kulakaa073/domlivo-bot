@@ -27,6 +27,8 @@ export type ResolvedRefs = {
   cityId: string | null
   districtId: string | null
   amenityIds: string[]
+  /** Guessed by the last-resort pass — a person must confirm these. */
+  looseAmenities: Array<{name: string; id: string}>
   /** Human-readable notes like `district "Rus i madh" not matched` — surfaced in the reply. */
   unmatched: string[]
 }
@@ -39,6 +41,8 @@ export type Outcome = {
   validation: ValidationResult
   photoCount: number
   photosFailed: number
+  /** Amenity names intake created on sight for this listing. */
+  createdAmenities?: string[]
   draftId: string
   /** Set when a Google Maps link in the message yielded a plausible pin. */
   coords: {lat: number; lng: number} | null

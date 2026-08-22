@@ -30,6 +30,10 @@ export type Messages = {
   draftCreated: string
   missingLabel: string
   notMatched: string
+  /** Amenities intake created on sight — flagged, invisible on the site until reviewed. */
+  amenityCreated: string
+  /** Amenities matched by the last-resort pass — a guess the agent should confirm. */
+  amenityGuessed: string
   photosFailed: (n: number) => string
   review: string
   photosWord: string
@@ -104,6 +108,8 @@ export const M: Record<Lang, Messages> = {
     draftCreated: "Draft created",
     missingLabel: "Missing",
     notMatched: "Not matched (left empty)",
+    amenityCreated: "Added as new amenities (hidden on the site until reviewed)",
+    amenityGuessed: "Matched by similarity — please check",
     photosFailed: (n) => `${n} photo(s) failed to upload`,
     review: "Review and publish",
     photosWord: "photos",
@@ -182,6 +188,8 @@ export const M: Record<Lang, Messages> = {
     draftCreated: "Чернетку створено",
     missingLabel: "Бракує",
     notMatched: "Не розпізнано (залишено порожнім)",
+    amenityCreated: "Додано як нові зручності (не показуються на сайті до перевірки)",
+    amenityGuessed: "Зіставлено за схожістю — перевірте, будь ласка",
     photosFailed: (n) => `${n} фото не завантажено`,
     review: "Переглянути й опублікувати",
     photosWord: "фото",
@@ -260,6 +268,8 @@ export const M: Record<Lang, Messages> = {
     draftCreated: "Черновик создан",
     missingLabel: "Не хватает",
     notMatched: "Не распознано (оставлено пустым)",
+    amenityCreated: "Добавлено как новые удобства (не показываются на сайте до проверки)",
+    amenityGuessed: "Сопоставлено по схожести — проверьте, пожалуйста",
     photosFailed: (n) => `${n} фото не загружено`,
     review: "Проверить и опубликовать",
     photosWord: "фото",
@@ -338,6 +348,8 @@ export const M: Record<Lang, Messages> = {
     draftCreated: "Drafti u krijua",
     missingLabel: "Mungon",
     notMatched: "Nuk u gjet (u la bosh)",
+    amenityCreated: "U shtuan si komoditete të reja (nuk shfaqen në sajt deri në shqyrtim)",
+    amenityGuessed: "U përputh me ngjashmëri — ju lutemi kontrolloni",
     photosFailed: (n) => `${n} foto nuk u ngarkuan`,
     review: "Shqyrtoni dhe publikoni",
     photosWord: "foto",
@@ -416,6 +428,8 @@ export const M: Record<Lang, Messages> = {
     draftCreated: "Bozza creata",
     missingLabel: "Mancano",
     notMatched: "Non riconosciuto (lasciato vuoto)",
+    amenityCreated: "Aggiunti come nuovi servizi (non visibili sul sito fino alla revisione)",
+    amenityGuessed: "Abbinato per somiglianza — si prega di verificare",
     photosFailed: (n) => `${n} foto non caricate`,
     review: "Rivedi e pubblica",
     photosWord: "foto",
