@@ -33,6 +33,28 @@ describe('scrubContacts', () => {
     }
   })
 
+  // Both cases below came out of replaying the 2026-08-22 drafts through the
+  // scrub: the guards were written against Latin text and fell straight through
+  // on the other four locales the CMS actually stores.
+  it('leaves a price alone when the currency word is not Latin', () => {
+    for (const s of [
+      'Цена составляет 10 500 000 лек.',
+      'Ціна становить 10 500 000 лекі.',
+      'Цена 92 000 евро, торг уместен.',
+      'Ціна 92 000 євро, торг доречний.',
+    ]) {
+      expect(scrubContacts(s).text).toBe(s)
+      expect(scrubContacts(s).removed).toBe(false)
+    }
+  })
+
+  it('clears the dangling label in every locale, not just English', () => {
+    expect(scrubContacts('Prezzo trattabile. Contatto: 069 45 67 890.').text).toBe('Prezzo trattabile.')
+    expect(scrubContacts('Торг уместен. Контакт: 069 45 67 890.').text).toBe('Торг уместен.')
+    expect(scrubContacts('Торг доречний. Контакти: 069 45 67 890.').text).toBe('Торг доречний.')
+    expect(scrubContacts('Çmimi i diskutueshëm. Kontakt: 069 45 67 890.').text).toBe('Çmimi i diskutueshëm.')
+  })
+
   it('leaves ordinary listing prose byte-identical', () => {
     const s =
       'A 78 m² apartment on the 4th floor of a 2019 building, with a balcony facing the sea.\n\nThe bus runs every 20 minutes.'

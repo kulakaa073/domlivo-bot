@@ -22,15 +22,30 @@ const HANDLE = /(?:^|(?<=\s))@[\w.]{3,}/g
  */
 const PHONE = /\(?\s*\+?\d[\d\s()-]{6,18}\d\)?/g
 
+/**
+ * The site stores five locales, so every guard below has to hold in Cyrillic
+ * and Albanian too. `\b` is ASCII-only in JavaScript and silently never
+ * matches "лек" or "Контакт" — replaying the 2026-08-22 drafts through an
+ * earlier version of this file deleted a Russian price for exactly that
+ * reason. Boundaries are written with `\p{L}` lookarounds instead.
+ */
 const CURRENCY_BEFORE = /[€$£]\s*$/
-const CURRENCY_AFTER = /^\s*(?:€|\$|£|eur|euro|usd|lek[ëe]?|all|mij[ëe])\b/i
+const CURRENCY_AFTER =
+  /^[\s.,)]*(?:€|\$|£|(?:eur|euro|usd|dollar|lek[ëe]?|all|mij[ëe]|лек|евро|євро|доллар|долар|USD)\p{L}*)/iu
+/** "Цена составляет 10 500 000" — the price word comes before the amount. */
+const PRICE_WORD_BEFORE =
+  /(?:price|asking|çmim|cmim|prezzo|prix|цена|ціна|вартість|стоимость|коштує|составляет|становить)\p{L}*[^.\n]{0,24}$/iu
 
-/** Labels that are left pointing at nothing once the number is gone. */
-const DANGLING_LABEL =
-  /\b(?:contact|contacts|tel|tel\.|telephone|phone|mob|mobile|kontakt|whatsapp|viber|telegram|тел|телефон|контакт)\b\s*[:\-–]?\s*(?=[.,;:)]|$)/gi
+/** Labels left pointing at nothing once the number is gone. */
+const DANGLING_LABEL = new RegExp(
+  '(?<!\\p{L})(?:contacts?|contatt[oi]|tel|tel\\.|telephone|telefon[oe]?|phone|mob|mobile|kontakt[i]?|whatsapp|viber|telegram|тел|телефон|контакт[иы]?|контакти)(?!\\p{L})\\s*[:\\-–]?\\s*(?=[.,;:)]|$)',
+  'giu',
+)
 
 function looksLikePrice(text: string, match: string, index: number): boolean {
-  if (CURRENCY_BEFORE.test(text.slice(0, index))) return true
+  const before = text.slice(0, index)
+  if (CURRENCY_BEFORE.test(before)) return true
+  if (PRICE_WORD_BEFORE.test(before)) return true
   if (CURRENCY_AFTER.test(text.slice(index + match.length))) return true
   return false
 }
