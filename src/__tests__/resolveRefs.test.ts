@@ -56,3 +56,80 @@ describe('resolveRefs', () => {
     expect(r.unmatched.some((u) => u.includes('Teleport'))).toBe(true)
   })
 })
+/**
+ * Dataset-accurate taxonomy for the matching cases found on 2026-08-22 —
+ * note city-tirana carries "Tirana" in every locale (no "Tiranë" anywhere),
+ * which is exactly why the Albanian form used to miss.
+ */
+const realistic = {
+  propertyTypes: [{_id: 'propertyType-apartment', title: {en: 'Apartment', sq: 'Apartament'}, slug: 'apartment'}],
+  cities: [
+    {_id: 'city-tirana', title: {en: 'Tirana', it: 'Tirana', ru: 'Тирана', sq: 'Tirana', uk: 'Тірана'}, slug: 'tirana'},
+    {_id: 'city-durres', title: {en: 'Durres', it: 'Durazzo', sq: 'Durrësi'}, slug: 'durres'},
+  ],
+  districts: [
+    {_id: 'district-blloku', title: {en: 'Blloku', sq: 'Blloku'}, slug: 'blloku', cityId: 'city-tirana'},
+    {
+      _id: 'district-kodra-e-diellit',
+      title: {en: 'Kodra e Diellit / Selitë', sq: 'Kodra e Diellit / Selitë'},
+      slug: 'kodra-e-diellit',
+      cityId: 'city-tirana',
+    },
+  ],
+  amenities: [
+    {_id: 'amenity-wifi', title: {en: 'WiFi', sq: 'WiFi'}, slug: 'wifi'},
+    {_id: 'amenity-security', title: {en: 'Security', sq: 'Siguri'}, slug: 'security'},
+    {_id: 'amenity-pool', title: {en: 'Swimming Pool', sq: 'Pishinë'}, slug: 'swimming-pool'},
+    {_id: 'amenity-storage-room', title: {en: 'Storage Room'}, slug: 'storage-room'},
+    {_id: 'amenity-sea-view', title: {en: 'Sea View'}, slug: 'sea-view'},
+    {_id: 'amenity-mountain-view', title: {en: 'Mountain View'}, slug: 'mountain-view'},
+  ],
+}
+
+const realSanity = {fetch: async () => realistic}
+
+describe('resolveRefs — wording found in real listings (2026-08-22)', () => {
+  it('matches Albanian definite/indefinite city and district forms', async () => {
+    const r = await resolveRefs(realSanity, facts({cityName: 'Tiranë', districtName: 'Bllok'}))
+    expect(r.cityId).toBe('city-tirana')
+    expect(r.districtId).toBe('district-blloku')
+    expect(r.unmatched).toEqual([])
+  })
+
+  it('matches the indefinite city form against a definite title (Durrës / Durrësi)', async () => {
+    const r = await resolveRefs(realSanity, facts({cityName: 'Durrës'}))
+    expect(r.cityId).toBe('city-durres')
+  })
+
+  it('ignores separators, so spaces match a hyphenated slug and Wi-Fi matches WiFi', async () => {
+    const r = await resolveRefs(
+      realSanity,
+      facts({cityName: 'Tiranë', districtName: 'Kodra e Diellit', amenityNames: ['Wi-Fi']}),
+    )
+    expect(r.districtId).toBe('district-kodra-e-diellit')
+    expect(r.amenityIds).toEqual(['amenity-wifi'])
+  })
+
+  it('matches a qualified amenity whose catalogue name is fully contained in it', async () => {
+    const r = await resolveRefs(realSanity, facts({amenityNames: ['24h Security']}))
+    expect(r.amenityIds).toEqual(['amenity-security'])
+  })
+
+  it('refuses a generic shared token: "Game room" is not "Storage Room"', async () => {
+    const r = await resolveRefs(realSanity, facts({amenityNames: ['Game room']}))
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched.some((u) => u.includes('Game room'))).toBe(true)
+  })
+
+  it('refuses an ambiguous match rather than guessing between two candidates', async () => {
+    const r = await resolveRefs(realSanity, facts({amenityNames: ['Sea and mountain view']}))
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched.some((u) => u.includes('Sea and mountain view'))).toBe(true)
+  })
+
+  it('leaves a genuinely new amenity unmatched for the review queue', async () => {
+    const r = await resolveRefs(realSanity, facts({amenityNames: ['Private pool', 'Sauna']}))
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched).toHaveLength(2)
+  })
+})
