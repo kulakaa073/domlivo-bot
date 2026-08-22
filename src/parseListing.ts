@@ -1,6 +1,7 @@
 import {log, errInfo} from './log.js'
 import type {ParsedListing} from './types.js'
 import {DEFAULT_LOCALES, localeLabels, localeObjectSchema} from './locales.js'
+import {scrubEditorial} from './scrubContacts.js'
 
 export const MODEL = 'claude-sonnet-5'
 
@@ -90,9 +91,12 @@ Rules for facts:
 - amenityNames: short English names, e.g. "Elevator", "Parking", "Balcony", "Sea view".
 
 Rules for editorial — write title, shortDescription and description in ALL of these locales: __LOCALES__:
-- title: at most 70 characters, factual, no hype. Pattern: "<rooms> apartment in <district>, <city>" adapted to what is known.
+- title: at most 70 characters, factual, no hype. One pattern in every locale: "<bedrooms>-bedroom <property type> in <district>, <city>", dropping whatever is not known. Use the bedroom count from the rules above, never the room notation of the source language.
 - shortDescription: 1–2 sentences.
 - description: 80–150 words built STRICTLY from stated facts. No invented details, no superlatives about things the text does not say.
+- NEVER reproduce contact details in any editorial field — no phone numbers, e-mail addresses, links or social handles. Contacts reach the site through the agent record.
+- NEVER state a price, rent or currency amount in the editorial fields. The CMS renders the price itself, and repeating the seller's figure is how a page ends up showing two different prices in two currencies.
+- NEVER describe what the listing does not say ("no further details were provided", "size not stated"). Missing facts are already null; anything worth flagging goes in parserNotes.
 
 The input may be SEVERAL messages concatenated (separated by blank lines) and can include unrelated chatter or, occasionally, TWO different properties. Extract the SINGLE most complete property listing and ignore the rest. If you skip a second property or discard unrelated content, say so briefly in parserNotes (e.g. "a second property was mentioned — skipped; submit it separately").
 
@@ -122,7 +126,16 @@ export async function parseListing(
       log('error', 'parse_no_tool_use', {contentTypes: msg.content.map((b) => b.type)})
       return null
     }
-    return tool.input as ParsedListing
+    const parsed = tool.input as ParsedListing
+    // The prompt forbids contact details; this is the part that guarantees it.
+    const scrub = scrubEditorial(parsed.editorial)
+    parsed.editorial = scrub.editorial
+    if (scrub.removed) {
+      log('info', 'parse_contacts_scrubbed', {captionLength: caption.length})
+      const note = 'Contact details were removed from the listing text.'
+      parsed.parserNotes = parsed.parserNotes ? `${parsed.parserNotes} ${note}` : note
+    }
+    return parsed
   } catch (e) {
     log('error', 'parse_failed', {captionLength: caption.length, ...errInfo(e)})
     return null
