@@ -39,6 +39,17 @@ describe('allowedOrigin', () => {
     expect(allowedOrigin(undefined, undefined)).toBeNull()
   })
 
+  it('allows the Studio deployment on Vercel, production and preview hosts', () => {
+    expect(allowedOrigin('https://domlivo-admin.vercel.app', undefined)).toBe('https://domlivo-admin.vercel.app')
+    expect(allowedOrigin('https://domlivo-admin-git-main-shades-projects-80b39296.vercel.app', undefined)).toBe(
+      'https://domlivo-admin-git-main-shades-projects-80b39296.vercel.app',
+    )
+    expect(allowedOrigin('https://domlivo-adminx.vercel.app', undefined)).toBeNull() // prefix must end at a dash
+    expect(allowedOrigin('https://evil.vercel.app', undefined)).toBeNull()
+    expect(allowedOrigin('http://domlivo-admin.vercel.app', undefined)).toBeNull() // https only
+    expect(allowedOrigin('https://domlivo-admin.vercel.app.evil.com', undefined)).toBeNull()
+  })
+
   it('an explicit STUDIO_ORIGINS list replaces the default rule', () => {
     expect(allowedOrigin('https://my.example.com', 'https://my.example.com, http://localhost:3333')).toBe(
       'https://my.example.com',
