@@ -8,6 +8,7 @@ import {resolveRefs} from './resolveRefs.js'
 import {validateFacts} from './validate.js'
 import {buildDraft} from './buildDraft.js'
 import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
+import {resolveUniqueSlug} from './uniqueSlug.js'
 import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
 import {screenCaption} from './guard.js'
@@ -100,6 +101,15 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
     {parsed, refs, validation, agentId: auth.agentId, assetIds, coords: map.coords},
     randomUUID(),
   )
+  // Titles come from a fixed pattern over a small vocabulary, so two listings
+  // can mint the same slug. Settled here rather than in buildDraft, which stays
+  // pure and is also what the update flow reuses without re-minting.
+  const minted = (doc.slug as {current: string}).current
+  const unique = await resolveUniqueSlug(deps.sanity, minted)
+  if (unique !== minted) {
+    log('info', 'slug_collision_resolved', {minted, unique})
+    doc.slug = {_type: 'slug', current: unique}
+  }
   await createDraft(deps.sanity, doc)
   log('info', 'draft_created', {
     draftId: doc._id,

@@ -133,3 +133,32 @@ describe('resolveRefs — wording found in real listings (2026-08-22)', () => {
     expect(r.unmatched).toHaveLength(2)
   })
 })
+
+describe('aliases', () => {
+  const withAliases = {
+    ...realistic,
+    amenities: [
+      {_id: 'amenity-pool', title: {en: 'Swimming Pool'}, slug: 'swimming-pool', aliases: ['Private pool']},
+      {_id: 'amenity-security', title: {en: 'Security'}, slug: 'security'},
+    ],
+  }
+
+  it('resolves a name a reviewer mapped onto an existing amenity', async () => {
+    const r = await resolveRefs({fetch: async () => withAliases}, facts({amenityNames: ['Private pool']}))
+    expect(r.amenityIds).toEqual(['amenity-pool'])
+    expect(r.unmatched).toEqual([])
+  })
+
+  it('refuses an alias claimed by two amenities instead of picking one', async () => {
+    const clashing = {
+      ...realistic,
+      amenities: [
+        {_id: 'amenity-pool', title: {en: 'Swimming Pool'}, slug: 'swimming-pool', aliases: ['Water']},
+        {_id: 'amenity-sea-view', title: {en: 'Sea View'}, slug: 'sea-view', aliases: ['Water']},
+      ],
+    }
+    const r = await resolveRefs({fetch: async () => clashing}, facts({amenityNames: ['Water']}))
+    expect(r.amenityIds).toEqual([])
+    expect(r.unmatched).toHaveLength(1)
+  })
+})

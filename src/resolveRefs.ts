@@ -36,21 +36,31 @@ type TaxDoc = {
   title?: Record<string, string | undefined> | null
   slug?: string | null
   cityId?: string | null
+  /** Reviewer-approved alternative names — see the amenity review queue spec. */
+  aliases?: string[] | null
 }
 
 const TAXONOMY_QUERY = `{
   "propertyTypes": *[_type == "propertyType"]{_id, title, "slug": slug.current},
   "cities": *[_type == "city"]{_id, title, "slug": slug.current},
   "districts": *[_type == "district"]{_id, title, "slug": slug.current, "cityId": city._ref},
-  "amenities": *[_type == "amenity"]{_id, title, "slug": slug.current}
+  "amenities": *[_type == "amenity"]{_id, title, "slug": slug.current, aliases}
 }`
 
-/** Every name a document answers to: its slug and each title locale. */
+/**
+ * Every name a document answers to: its slug, each title locale, and any alias
+ * a reviewer has approved. Aliases go through the same three passes and the
+ * same uniqueness rule as everything else, so one that would match two
+ * documents makes both ambiguous rather than picking a winner.
+ */
 function names(d: TaxDoc): string[] {
   const out: string[] = []
   if (d.slug) out.push(d.slug)
   for (const v of Object.values(d.title ?? {})) {
     if (typeof v === 'string' && v.trim()) out.push(v)
+  }
+  for (const a of d.aliases ?? []) {
+    if (typeof a === 'string' && a.trim()) out.push(a)
   }
   return out
 }
