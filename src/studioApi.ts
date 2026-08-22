@@ -16,7 +16,22 @@ export type GateResult =
   | {ok: false; status: number; error: string; corsOrigin: string | null}
 
 const DEFAULT_LOCAL = 'http://localhost:3333'
+
+/**
+ * The Studio is served from Vercel (`domlivo-admin`), not `*.sanity.studio` —
+ * the `sanity deploy` host is unclaimed. Preview deployments get
+ * `domlivo-admin-<branch/hash>.vercel.app`, so the production host and the
+ * `domlivo-admin-` prefix are both allowed. `STUDIO_ORIGINS` still overrides
+ * the whole default rule when it is set.
+ */
+const STUDIO_VERCEL_PROJECT = 'domlivo-admin'
 const RATE_LIMIT_PER_MINUTE = 30
+
+function isStudioVercelHost(hostname: string): boolean {
+  if (!hostname.endsWith('.vercel.app')) return false
+  const sub = hostname.slice(0, -'.vercel.app'.length)
+  return sub === STUDIO_VERCEL_PROJECT || sub.startsWith(`${STUDIO_VERCEL_PROJECT}-`)
+}
 
 export function allowedOrigin(origin: string | undefined, originsEnv: string | undefined): string | null {
   if (!origin) return null
@@ -30,6 +45,7 @@ export function allowedOrigin(origin: string | undefined, originsEnv: string | u
     const u = new URL(o)
     if (o === DEFAULT_LOCAL) return o
     if (u.protocol === 'https:' && u.hostname.endsWith('.sanity.studio')) return o
+    if (u.protocol === 'https:' && isStudioVercelHost(u.hostname)) return o
   } catch {
     return null
   }
