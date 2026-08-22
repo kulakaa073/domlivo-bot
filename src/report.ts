@@ -34,6 +34,11 @@ export function buildReply(o: Outcome, studioBaseUrl: string, lang: Lang = 'en')
   const problems = [
     ...(missing.length ? [`${t.missingLabel}: ${missing.join(', ')}`] : []),
     ...o.refs.unmatched.map((u) => `${t.notMatched}: ${u}`),
+    // Both of these are things the agent is being asked to confirm, not errors.
+    ...(o.createdAmenities?.length ? [`${t.amenityCreated}: ${o.createdAmenities.join(', ')}`] : []),
+    ...(o.refs.looseAmenities.length
+      ? [`${t.amenityGuessed}: ${o.refs.looseAmenities.map((l) => l.name).join(', ')}`]
+      : []),
     ...o.validation.warnings,
     ...(o.photosFailed > 0 ? [t.photosFailed(o.photosFailed)] : []),
     ...(o.parsed.parserNotes ? [o.parsed.parserNotes] : []),

@@ -3,12 +3,13 @@ import {log} from './log.js'
 import type {GroupItem} from './assembly.js'
 import type {Telegram} from './telegram/api.js'
 import type {ParsedListing} from './types.js'
-import {resolveAgent, type SanityFetchLike} from './resolveAgent.js'
+import {resolveAgent, type SanityCreateIfNotExistsLike, type SanityFetchLike} from './resolveAgent.js'
 import {resolveRefs} from './resolveRefs.js'
 import {validateFacts} from './validate.js'
 import {buildDraft} from './buildDraft.js'
 import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
 import {resolveUniqueSlug} from './uniqueSlug.js'
+import {createMissingAmenities} from './createAmenities.js'
 import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
 import {screenCaption} from './guard.js'
@@ -17,7 +18,7 @@ import type {StartReviewArgs} from './review.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
-  sanity: SanityFetchLike & SanityWriteLike
+  sanity: SanityFetchLike & SanityWriteLike & SanityCreateIfNotExistsLike
   telegram: Pick<Telegram, 'sendMessage' | 'downloadFile'>
   /** (caption, photoCount) -> ParsedListing | null. Injected so tests never hit the API. */
   parse: (caption: string, photoCount: number) => Promise<ParsedListing | null>
@@ -86,6 +87,12 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   }
 
   const refs = await resolveRefs(deps.sanity, parsed.facts)
+  // An amenity the catalogue lacks is created on sight, flagged for review and
+  // attached now — the listing is right immediately, and nothing flagged shows
+  // on the site until a person clears the flag.
+  const newAmenities = await createMissingAmenities(deps.sanity, refs.unmatched)
+  refs.amenityIds = [...refs.amenityIds, ...newAmenities.ids]
+  refs.unmatched = newAmenities.stillUnmatched
   const validation = validateFacts(parsed.facts)
 
   // Coordinates straight from a Google Maps link, if the message carried one.
@@ -128,6 +135,7 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
       validation,
       photoCount: assetIds.length,
       photosFailed: failed,
+      createdAmenities: newAmenities.created,
       draftId: String(doc._id),
       coords: map.coords,
     },

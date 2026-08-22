@@ -33,7 +33,8 @@ export function fullOutcome(): {
       sourceLanguage: 'sq',
       parserNotes: '',
     },
-    refs: {propertyTypeId: 'pt1', cityId: 'c1', districtId: 'd1', amenityIds: ['a1'], unmatched: ['amenity "Parking"']},
+    refs: {propertyTypeId: 'pt1', cityId: 'c1', districtId: 'd1', amenityIds: ['a1'],
+    looseAmenities: [], unmatched: ['amenity "Parking"']},
     validation: {priceEur: 145000, warnings: []},
     photoCount: 6,
   }

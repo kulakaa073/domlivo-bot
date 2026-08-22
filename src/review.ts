@@ -2,13 +2,14 @@ import {log} from './log.js'
 import type {RedisLike, GroupItem} from './assembly.js'
 import type {IncomingCallback} from './telegram/extract.js'
 import type {InlineButton} from './telegram/api.js'
-import type {SanityFetchLike} from './resolveAgent.js'
+import type {SanityCreateIfNotExistsLike, SanityFetchLike} from './resolveAgent.js'
 import type {ParsedFacts} from './types.js'
 import {M, type Lang, type Messages} from './messages.js'
 import {buildPreview, type PreviewData} from './preview.js'
 import {computeMissing, missingLabels} from './missing.js'
 import {saveReview, loadReview, clearReview, mintToken, cbData, parseCb} from './reviewState.js'
 import {resolveRefs} from './resolveRefs.js'
+import {createMissingAmenities} from './createAmenities.js'
 import {validateFacts} from './validate.js'
 import {screenAnswer} from './guard.js'
 import {mergeFacts, mergeEditorial, isEmptyUpdate, type UpdateParse} from './parseUpdate.js'
@@ -19,7 +20,7 @@ import {buildReply} from './report.js'
 
 export type ReviewDeps = {
   redis: RedisLike
-  sanity: SanityFetchLike & SanityWriteLike & SanityPatchLike & SanityPublishLike
+  sanity: SanityFetchLike & SanityWriteLike & SanityPatchLike & SanityPublishLike & SanityCreateIfNotExistsLike
   telegram: {
     sendMessage(
       chatId: number,
@@ -198,6 +199,11 @@ export async function handleUpdateAnswer(items: GroupItem[], deps: ReviewDeps): 
   const mergedFacts = mergeFacts(ctx.data.parsed.facts, upd.facts)
   const mergedEditorial = mergeEditorial(ctx.data.parsed.editorial, upd.editorial)
   const refs = await resolveRefs(deps.sanity, mergedFacts)
+  // Same rule as intake: an amenity the catalogue lacks is created flagged and
+  // attached, so an update never silently drops one the agent has just added.
+  const newAmenities = await createMissingAmenities(deps.sanity, refs.unmatched)
+  refs.amenityIds = [...refs.amenityIds, ...newAmenities.ids]
+  refs.unmatched = newAmenities.stillUnmatched
   const validation = validateFacts(mergedFacts)
 
   const {assetIds, failed} = await uploadPhotos(deps.sanity, deps.telegram, photoFileIds, {

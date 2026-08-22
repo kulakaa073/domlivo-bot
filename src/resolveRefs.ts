@@ -103,6 +103,48 @@ function matchOne(docs: TaxDoc[], name: string): string | null {
   return only(contained)
 }
 
+/**
+ * Words that name a container or a qualifier rather than the thing itself.
+ * "Room" is why `Game room` must not reach `Storage Room`: it is the head of
+ * both names and carries none of their meaning. Kept deliberately short — a
+ * long list turns a mechanical rule into a private vocabulary.
+ */
+const GENERIC_WORDS = new Set(['room', 'area', 'space', 'zone', 'place', 'unit', 'set', 'system'])
+
+/**
+ * Last resort, and only for amenities: a catalogue entry wins if one of its
+ * words appears in the parsed name, that word belongs to no other entry, and
+ * it carries meaning of its own. `pool` links "Private pool" to "Swimming
+ * Pool"; `view` links nothing, because Sea View and Mountain View both claim
+ * it; `room` links nothing, because it names a container.
+ *
+ * Every hit is returned separately from the confident ones — this is a guess
+ * a person is being asked to check, and it must never read as a match.
+ */
+function looseMatch(docs: TaxDoc[], name: string): string | null {
+  const needleTokens = new Set(tokens(name))
+  if (needleTokens.size === 0) return null
+
+  const ownersOf = new Map<string, Set<string>>()
+  for (const d of docs) {
+    for (const n of names(d)) {
+      for (const w of tokens(n)) {
+        if (w.length < 3 || GENERIC_WORDS.has(w)) continue
+        const owners = ownersOf.get(w) ?? new Set<string>()
+        owners.add(d._id)
+        ownersOf.set(w, owners)
+      }
+    }
+  }
+
+  const hits = new Set<string>()
+  for (const w of needleTokens) {
+    const owners = ownersOf.get(w)
+    if (owners && owners.size === 1) hits.add([...owners][0]!)
+  }
+  return hits.size === 1 ? [...hits][0]! : null
+}
+
 /** Code, not AI: names -> existing doc ids. Never creates taxonomy documents. */
 export async function resolveRefs(sanity: SanityFetchLike, facts: ParsedFacts): Promise<ResolvedRefs> {
   const tax = (await sanity.fetch(TAXONOMY_QUERY)) as {
@@ -124,11 +166,21 @@ export async function resolveRefs(sanity: SanityFetchLike, facts: ParsedFacts): 
   if (facts.districtName && !districtId) unmatched.push(`district "${facts.districtName}"`)
 
   const amenityIds: string[] = []
+  const looseAmenities: Array<{name: string; id: string}> = []
   for (const name of facts.amenityNames) {
     const id = matchOne(tax.amenities, name)
-    if (id) amenityIds.push(id)
-    else unmatched.push(`amenity "${name}"`)
+    if (id) {
+      amenityIds.push(id)
+      continue
+    }
+    const loose = looseMatch(tax.amenities, name)
+    if (loose && !amenityIds.includes(loose)) {
+      amenityIds.push(loose)
+      looseAmenities.push({name, id: loose})
+    } else if (!loose) {
+      unmatched.push(`amenity "${name}"`)
+    }
   }
 
-  return {propertyTypeId, cityId, districtId, amenityIds, unmatched}
+  return {propertyTypeId, cityId, districtId, amenityIds, looseAmenities, unmatched}
 }
