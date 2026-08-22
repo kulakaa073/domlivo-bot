@@ -91,7 +91,7 @@ Rules for facts:
 - amenityNames: short English names, e.g. "Elevator", "Parking", "Balcony", "Sea view".
 
 Rules for editorial — write title, shortDescription and description in ALL of these locales: __LOCALES__:
-- title: at most 70 characters, factual, no hype. One pattern in every locale: "<bedrooms>-bedroom <property type> in <district>, <city>", dropping whatever is not known. Use the bedroom count from the rules above, never the room notation of the source language.
+- title: at most 70 characters, factual, no hype. The same STRUCTURE in every locale — bedroom count, property type, district, city — dropping whatever is not known: "2-bedroom apartment in Currila, Durrës". Write each locale in ITS OWN words: translate the property type (apartment / квартира / квартира / apartament / appartamento) and use the locally common form of every place name (Durrës / Дуррес / Durazzo; Tirana / Тирана). NEVER paste the Albanian propertyTypeName or cityName from the facts into another language — those fields are for the CMS, not for the titles. Use the bedroom count from the rules above, never the room notation of the source language.
 - shortDescription: 1–2 sentences.
 - description: 80–150 words built STRICTLY from stated facts. No invented details, no superlatives about things the text does not say.
 - NEVER reproduce contact details in any editorial field — no phone numbers, e-mail addresses, links or social handles. Contacts reach the site through the agent record.
