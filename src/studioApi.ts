@@ -34,6 +34,13 @@ const RATE_LIMIT_PER_MINUTE = 30
  * locales, with headroom for the JSON envelope. Accepting more than this is
  * how a request gets answered with a truncated tool call and fails as a 502.
  */
+/**
+ * Measured, not guessed: 40 items with five locales asks for 200 strings in one
+ * tool call and fails deterministically — the same payload 502s twice — while
+ * 30, 25 and 20 all succeed. 25 keeps margin.
+ */
+export const MAX_TRANSLATE_ITEMS = 25
+
 export function maxCharsForLocales(localeCount: number): number {
   return Math.max(1_000, Math.floor(24_000 / Math.max(1, localeCount)))
 }
