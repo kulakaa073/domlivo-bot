@@ -27,6 +27,17 @@ const DEFAULT_LOCAL = 'http://localhost:3333'
 const STUDIO_VERCEL_PROJECT = 'domlivo-admin'
 const RATE_LIMIT_PER_MINUTE = 30
 
+/**
+ * The model can return 32 000 tokens, and a translation returns the input once
+ * per locale — in Cyrillic and Albanian, roughly a token per character. So the
+ * input a request may carry is the output ceiling divided by the number of
+ * locales, with headroom for the JSON envelope. Accepting more than this is
+ * how a request gets answered with a truncated tool call and fails as a 502.
+ */
+export function maxCharsForLocales(localeCount: number): number {
+  return Math.max(1_000, Math.floor(24_000 / Math.max(1, localeCount)))
+}
+
 function isStudioVercelHost(hostname: string): boolean {
   if (!hostname.endsWith('.vercel.app')) return false
   const sub = hostname.slice(0, -'.vercel.app'.length)

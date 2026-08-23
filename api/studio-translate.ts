@@ -3,12 +3,11 @@ import Anthropic from '@anthropic-ai/sdk'
 import {loadConfig} from '../src/config.js'
 import {log} from '../src/log.js'
 import {makeRedis} from '../src/redisClient.js'
-import {gateStudioRequest, translateFields, type TranslateItem} from '../src/studioApi.js'
+import {gateStudioRequest, maxCharsForLocales, translateFields, type TranslateItem} from '../src/studioApi.js'
 import type {AnthropicLike} from '../src/parseListing.js'
 import {validateLocales} from '../src/locales.js'
 
 const MAX_ITEMS = 40
-const MAX_CHARS = 20_000
 
 function applyCors(res: VercelResponse, origin: string | null): void {
   if (!origin) return
@@ -61,8 +60,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(400).json({error: 'sourceLang (one of locales) and items are required'})
     return
   }
-  if (items.length > MAX_ITEMS || items.reduce((n, i) => n + (i.text?.length ?? 0), 0) > MAX_CHARS) {
-    res.status(400).json({error: 'too much content in one request'})
+  const maxChars = maxCharsForLocales(locales.length)
+  const chars = items.reduce((n, i) => n + (i.text?.length ?? 0), 0)
+  if (items.length > MAX_ITEMS || chars > maxChars) {
+    res.status(400).json({
+      error: `too much content in one request (max ${MAX_ITEMS} items / ${maxChars} characters for ${locales.length} locales)`,
+    })
     return
   }
   const clean = items.filter(
