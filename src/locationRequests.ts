@@ -104,14 +104,15 @@ export async function recordLocationRequests(
         source: context.source,
         firstSeen: context.now,
         lastSeen: context.now,
-        examples: [],
+        // Only the first listing is kept as context: the count already carries
+        // how often the place is asked for, and appending on every hit would
+        // grow this array without bound.
+        examples: [context.listingTitle],
       })
       await sanity
         .patch(plan.id, {
           inc: {count: 1},
           set: {lastSeen: context.now},
-          setIfMissing: {examples: []},
-          insert: {after: 'examples[-1]', items: [context.listingTitle]},
         })
         .commit()
       recorded.push(`${plan.kind} "${plan.name}"`)
