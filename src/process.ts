@@ -7,9 +7,10 @@ import {resolveAgent, type SanityCreateIfNotExistsLike, type SanityFetchLike} fr
 import {resolveRefs} from './resolveRefs.js'
 import {validateFacts} from './validate.js'
 import {buildDraft} from './buildDraft.js'
-import {uploadPhotos, createDraft, type SanityWriteLike} from './writeDraft.js'
+import {uploadPhotos, createDraft, type SanityPatchLike, type SanityWriteLike} from './writeDraft.js'
 import {resolveUniqueSlug} from './uniqueSlug.js'
 import {createMissingAmenities} from './createAmenities.js'
+import {recordLocationRequests} from './locationRequests.js'
 import {buildReply} from './report.js'
 import {M, pickLang} from './messages.js'
 import {screenCaption} from './guard.js'
@@ -18,7 +19,7 @@ import type {StartReviewArgs} from './review.js'
 
 export type PipelineDeps = {
   studioBaseUrl: string
-  sanity: SanityFetchLike & SanityWriteLike & SanityCreateIfNotExistsLike
+  sanity: SanityFetchLike & SanityWriteLike & SanityCreateIfNotExistsLike & SanityPatchLike
   telegram: Pick<Telegram, 'sendMessage' | 'downloadFile'>
   /** (caption, photoCount) -> ParsedListing | null. Injected so tests never hit the API. */
   parse: (caption: string, photoCount: number) => Promise<ParsedListing | null>
@@ -93,6 +94,13 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
   const newAmenities = await createMissingAmenities(deps.sanity, refs.unmatched)
   refs.amenityIds = [...refs.amenityIds, ...newAmenities.ids]
   refs.unmatched = newAmenities.stillUnmatched
+  // A city or district cannot be stubbed — a zone carries a country, a public
+  // route and a readiness gate. Record it for staff and tell the agent.
+  const missingLocations = await recordLocationRequests(deps.sanity, refs.unmatched, {
+    listingTitle: parsed.editorial.title.en || 'Untitled listing',
+    source: 'telegram',
+    now: new Date().toISOString(),
+  })
   const validation = validateFacts(parsed.facts)
 
   // Coordinates straight from a Google Maps link, if the message carried one.
@@ -136,6 +144,7 @@ export async function processMessage(items: GroupItem[], deps: PipelineDeps): Pr
       photoCount: assetIds.length,
       photosFailed: failed,
       createdAmenities: newAmenities.created,
+      missingLocations,
       draftId: String(doc._id),
       coords: map.coords,
     },

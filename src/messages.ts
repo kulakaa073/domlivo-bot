@@ -34,6 +34,8 @@ export type Messages = {
   amenityCreated: string
   /** Amenities matched by the last-resort pass — a guess the agent should confirm. */
   amenityGuessed: string
+  /** A city or district the catalogue does not have — staff must add it. */
+  locationMissing: (places: string) => string
   photosFailed: (n: number) => string
   review: string
   photosWord: string
@@ -110,6 +112,8 @@ export const M: Record<Lang, Messages> = {
     notMatched: "Not matched (left empty)",
     amenityCreated: "Added as new amenities (hidden on the site until reviewed)",
     amenityGuessed: "Matched by similarity — please check",
+    locationMissing: (places) =>
+      `Sorry, we could not find ${places} in the catalogue. Check the draft — if it is a typo, fix it in Studio and pick the right one; otherwise ask staff to add the location. Your listing is saved, but it cannot be published until the location is set.`,
     photosFailed: (n) => `${n} photo(s) failed to upload`,
     review: "Review and publish",
     photosWord: "photos",
@@ -190,6 +194,8 @@ export const M: Record<Lang, Messages> = {
     notMatched: "Не розпізнано (залишено порожнім)",
     amenityCreated: "Додано як нові зручності (не показуються на сайті до перевірки)",
     amenityGuessed: "Зіставлено за схожістю — перевірте, будь ласка",
+    locationMissing: (places) =>
+      `На жаль, ${places} немає в каталозі. Перевірте чернетку — якщо це друкарська помилка, виправте її в Studio та оберіть потрібне; інакше попросіть команду додати локацію. Оголошення збережено, але опублікувати його без локації не вийде.`,
     photosFailed: (n) => `${n} фото не завантажено`,
     review: "Переглянути й опублікувати",
     photosWord: "фото",
@@ -270,6 +276,8 @@ export const M: Record<Lang, Messages> = {
     notMatched: "Не распознано (оставлено пустым)",
     amenityCreated: "Добавлено как новые удобства (не показываются на сайте до проверки)",
     amenityGuessed: "Сопоставлено по схожести — проверьте, пожалуйста",
+    locationMissing: (places) =>
+      `К сожалению, ${places} нет в каталоге. Проверьте черновик — если это опечатка, исправьте её в Studio и выберите нужное; иначе попросите команду добавить локацию. Объявление сохранено, но опубликовать его без локации нельзя.`,
     photosFailed: (n) => `${n} фото не загружено`,
     review: "Проверить и опубликовать",
     photosWord: "фото",
@@ -350,6 +358,8 @@ export const M: Record<Lang, Messages> = {
     notMatched: "Nuk u gjet (u la bosh)",
     amenityCreated: "U shtuan si komoditete të reja (nuk shfaqen në sajt deri në shqyrtim)",
     amenityGuessed: "U përputh me ngjashmëri — ju lutemi kontrolloni",
+    locationMissing: (places) =>
+      `Na vjen keq, ${places} nuk u gjet në katalog. Kontrolloni draftin — nëse është gabim shkrimi, korrigjojeni në Studio dhe zgjidhni të saktin; përndryshe kërkoni stafit ta shtojë vendndodhjen. Njoftimi u ruajt, por nuk mund të publikohet pa vendndodhje.`,
     photosFailed: (n) => `${n} foto nuk u ngarkuan`,
     review: "Shqyrtoni dhe publikoni",
     photosWord: "foto",
@@ -430,6 +440,8 @@ export const M: Record<Lang, Messages> = {
     notMatched: "Non riconosciuto (lasciato vuoto)",
     amenityCreated: "Aggiunti come nuovi servizi (non visibili sul sito fino alla revisione)",
     amenityGuessed: "Abbinato per somiglianza — si prega di verificare",
+    locationMissing: (places) =>
+      `Spiacenti, ${places} non è nel catalogo. Controlla la bozza — se è un errore di battitura, correggilo in Studio e scegli quello giusto; altrimenti chiedi allo staff di aggiungere la località. L annuncio è salvato, ma non può essere pubblicato senza località.`,
     photosFailed: (n) => `${n} foto non caricate`,
     review: "Rivedi e pubblica",
     photosWord: "foto",

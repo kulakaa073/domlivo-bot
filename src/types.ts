@@ -43,6 +43,8 @@ export type Outcome = {
   photosFailed: number
   /** Amenity names intake created on sight for this listing. */
   createdAmenities?: string[]
+  /** Cities or districts the catalogue lacks — recorded as requests for staff. */
+  missingLocations?: string[]
   draftId: string
   /** Set when a Google Maps link in the message yielded a plausible pin. */
   coords: {lat: number; lng: number} | null

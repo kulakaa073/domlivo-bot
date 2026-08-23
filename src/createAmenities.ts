@@ -22,7 +22,7 @@ const ALLOWED = /^[\p{L}\p{N} .,&/'’-]+$/u
 /** Four or more digits in a row is a phone number or a price, not an amenity. */
 const DIGIT_RUN = /\d[\d\s()-]{3,}/
 
-export type NormalizedAmenity = {ok: true; name: string; key: string} | {ok: false}
+export type NormalizedAmenity = {ok: true; name: string; key: string; slug: string} | {ok: false}
 
 export function normalizeAmenityName(raw: string): NormalizedAmenity {
   const name = (raw ?? '').replace(/\s+/g, ' ').trim()
@@ -36,10 +36,20 @@ export function normalizeAmenityName(raw: string): NormalizedAmenity {
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, '')
   if (!key) return {ok: false}
-  return {ok: true, name, key}
+  // The key is the identity — separator-blind, so "Wi-Fi" and "wifi" are one
+  // document. The slug is a URL and a catalog filter value, so it keeps its
+  // word breaks: wood-flooring, like storage-room and swimming-pool already in
+  // the catalogue. Pinned to the cms copy by test.
+  const slug = name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return {ok: true, name, key, slug}
 }
 
-export function amenityDocFor(n: {ok: true; name: string; key: string}): Record<string, unknown> & {
+export function amenityDocFor(n: {name: string; key: string; slug: string}): Record<string, unknown> & {
   _id: string
   _type: string
 } {
@@ -47,7 +57,7 @@ export function amenityDocFor(n: {ok: true; name: string; key: string}): Record<
     _id: `amenity-${n.key}`,
     _type: 'amenity',
     title: {_type: 'localizedString', en: n.name},
-    slug: {_type: 'slug', current: n.key},
+    slug: {_type: 'slug', current: n.slug},
     active: true,
     needsReview: true,
   }
