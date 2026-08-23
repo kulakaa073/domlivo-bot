@@ -95,7 +95,7 @@ Rules for facts:
 Rules for editorial — write title, shortDescription and description in ALL of these locales: __LOCALES__:
 - title: at most 70 characters, factual, no hype. The same STRUCTURE in every locale — size, property type, district, city — dropping whatever is not known. Write each locale in ITS OWN words: translate the property type (apartment / квартира / квартира / apartament / appartamento) and use the locally common form of every place name (Durrës / Дуррес / Durazzo; Tirana / Тирана). NEVER paste the Albanian propertyTypeName or cityName from the facts into another language — those fields are for the CMS, not for the titles.
 - Which number a title states depends on what the language counts, and getting this wrong misdescribes the flat:
-  · en / it — BEDROOMS: "2-bedroom apartment in Currila, Durrës", "Appartamento 2 camere a Currila, Durazzo".
+  · en / it — BEDROOMS, always, even when the source text counted rooms: a Russian "двухкомнатная" (rooms 2, bedrooms 1) is "1-bedroom apartment" in English and "Appartamento 1 camera" in Italian, never "2-room apartment".
   · sq — the local notation from bedrooms + living rooms: "Apartament 2+1 në Currila, Durrës".
   · ru / uk — ROOMS, because "комнатная"/"кімнатна" counts rooms and not bedrooms: a 2+1 is "3-комнатная квартира", a 1+1 is "2-комнатная квартира". Never render the bedroom count with that word.
   When rooms is null, ru/uk fall back to naming bedrooms explicitly ("квартира с 1 спальней") rather than guessing a room total.
