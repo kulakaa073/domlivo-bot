@@ -39,6 +39,9 @@ export function buildReply(o: Outcome, studioBaseUrl: string, lang: Lang = 'en')
     ...(o.refs.looseAmenities.length
       ? [`${t.amenityGuessed}: ${o.refs.looseAmenities.map((l) => l.name).join(', ')}`]
       : []),
+    // A missing city or district cannot be stubbed the way an amenity can, so
+    // the agent is told plainly what to do about it.
+    ...(o.missingLocations?.length ? [t.locationMissing(o.missingLocations.join(', '))] : []),
     ...o.validation.warnings,
     ...(o.photosFailed > 0 ? [t.photosFailed(o.photosFailed)] : []),
     ...(o.parsed.parserNotes ? [o.parsed.parserNotes] : []),

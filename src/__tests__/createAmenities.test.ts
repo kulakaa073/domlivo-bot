@@ -3,7 +3,7 @@ import {amenityDocFor, createMissingAmenities, normalizeAmenityName} from '../cr
 
 describe('normalizeAmenityName', () => {
   it('accepts a plausible name and collapses whitespace', () => {
-    expect(normalizeAmenityName('  Sauna   room ')).toEqual({ok: true, name: 'Sauna room', key: 'saunaroom'})
+    expect(normalizeAmenityName('  Sauna   room ')).toEqual({ok: true, name: 'Sauna room', key: 'saunaroom', slug: 'sauna-room'})
   })
 
   it('folds case, diacritics and separators into one key', () => {
@@ -23,7 +23,7 @@ describe('normalizeAmenityName', () => {
 
 describe('amenityDocFor', () => {
   it('is a published document, flagged, and identified by the fold key', () => {
-    expect(amenityDocFor({ok: true, name: 'Sauna', key: 'sauna'})).toEqual({
+    expect(amenityDocFor({name: 'Sauna', key: 'sauna', slug: 'sauna'})).toEqual({
       _id: 'amenity-sauna',
       _type: 'amenity',
       title: {_type: 'localizedString', en: 'Sauna'},
@@ -34,7 +34,7 @@ describe('amenityDocFor', () => {
   })
 
   it('never mints a draft id — a reference to a draft is broken in published content', () => {
-    expect(amenityDocFor({ok: true, name: 'Sauna', key: 'sauna'})._id.startsWith('drafts.')).toBe(false)
+    expect(amenityDocFor({name: 'Sauna', key: 'sauna', slug: 'sauna'})._id.startsWith('drafts.')).toBe(false)
   })
 })
 
