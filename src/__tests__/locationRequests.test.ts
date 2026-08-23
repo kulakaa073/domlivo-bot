@@ -95,3 +95,23 @@ describe('recordLocationRequests', () => {
     expect(s.created).toHaveLength(0)
   })
 })
+
+describe('examples stay bounded', () => {
+  it('keeps only the first listing as context, and never appends on later hits', async () => {
+    const created: Array<Record<string, unknown>> = []
+    const patched: Array<Record<string, unknown>> = []
+    const s = {
+      async fetch() {return null},
+      async createIfNotExists(doc: Record<string, unknown> & {_id: string; _type: string}) {created.push(doc); return doc},
+      patch(_id: string, ops: Record<string, unknown>) {patched.push(ops); return {async commit() {return null}}},
+    }
+    const ctx = {listingTitle: 'First listing', source: 'telegram' as const, now: '2026-08-22T10:00:00.000Z'}
+    await recordLocationRequests(s, ['city "Pukë"'], ctx)
+    await recordLocationRequests(s, ['city "Pukë"'], {...ctx, listingTitle: 'Second listing'})
+
+    expect(created[0]!.examples).toEqual(['First listing'])
+    // createIfNotExists leaves the existing row alone, and the patch only
+    // touches the count and the timestamp — so the array cannot grow.
+    for (const ops of patched) expect(ops).not.toHaveProperty('insert')
+  })
+})
