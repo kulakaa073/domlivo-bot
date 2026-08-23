@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {allowedOrigin, gateStudioRequest, translateFields, type TranslateItem} from '../studioApi.js'
+import {allowedOrigin, gateStudioRequest, maxCharsForLocales, translateFields, type TranslateItem} from '../studioApi.js'
 import type {RedisLike} from '../assembly.js'
 import type {AnthropicLike} from '../parseListing.js'
 
@@ -107,5 +107,21 @@ describe('translateFields', () => {
 
     const bad: AnthropicLike = {messages: {create: async () => Promise.reject(new Error('overloaded'))}}
     expect(await translateFields(bad, 'sq', items)).toBeNull()
+  })
+})
+
+describe('maxCharsForLocales', () => {
+  it('divides the output ceiling by the number of locales', () => {
+    // A translation returns the input once per locale, and the model can only
+    // return 32k tokens — so accepting 20k characters for five locales, as the
+    // endpoint used to, asks for roughly triple what it can produce. That is
+    // how a bulk backfill got a 502 with a truncated tool call.
+    expect(maxCharsForLocales(5)).toBe(4_800)
+    expect(maxCharsForLocales(2)).toBe(12_000)
+  })
+
+  it('never collapses to nothing, however many locales are asked for', () => {
+    expect(maxCharsForLocales(100)).toBe(1_000)
+    expect(maxCharsForLocales(0)).toBe(24_000)
   })
 })
