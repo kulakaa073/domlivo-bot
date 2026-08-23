@@ -21,7 +21,8 @@ const taxonomy = {
 const sanity = {fetch: async () => taxonomy}
 
 const facts = (over: Partial<ParsedFacts>): ParsedFacts => ({
-  price: null, dealType: null, areaM2: null, bedrooms: null, bathrooms: null,
+  price: null, dealType: null, areaM2: null, bedrooms: null,
+    rooms: null, bathrooms: null,
   floor: null, yearBuilt: null, propertyTypeName: null, cityName: null,
   districtName: null, address: null, amenityNames: [], ...over,
 })

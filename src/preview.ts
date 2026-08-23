@@ -43,6 +43,7 @@ export function buildPreview(d: PreviewData, lang: Lang): string {
   const location = city ? (district ? `${district}, ${city}` : city) : '—'
 
   const beds = f.bedrooms !== null ? String(f.bedrooms) : '—'
+  const rooms = f.rooms !== null ? String(f.rooms) : null
   const baths = f.bathrooms !== null ? String(f.bathrooms) : '—'
   const area = f.areaM2 !== null ? `${f.areaM2} m²` : '—'
   const price = d.validation.priceEur !== null ? fmtEur(d.validation.priceEur) : '—'
@@ -58,7 +59,9 @@ export function buildPreview(d: PreviewData, lang: Lang): string {
   const lines = [
     `🏠 ${title}`,
     `📍 ${location}`,
-    `🛏 ${beds} · 🛁 ${baths} · ↔ ${area}`,
+    // Rooms only when the listing said it — an absent number is not a dash here,
+    // it is simply one fewer fact on the line.
+    rooms ? `🚪 ${rooms} · 🛏 ${beds} · 🛁 ${baths} · ↔ ${area}` : `🛏 ${beds} · 🛁 ${baths} · ↔ ${area}`,
     `💶 ${price} · ${deal}`,
     ...(f.yearBuilt !== null || f.floor !== null
       ? [

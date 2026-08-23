@@ -5,7 +5,8 @@ import type {GroupItem} from '../assembly.js'
 const parsedListing = {
   facts: {
     price: {amount: 59000, currency: 'EUR', period: 'total'},
-    dealType: 'sale', areaM2: 76, bedrooms: 2, bathrooms: null, floor: null,
+    dealType: 'sale', areaM2: 76, bedrooms: 2,
+    rooms: null, bathrooms: null, floor: null,
     yearBuilt: null, propertyTypeName: 'Apartament', cityName: 'Shkodër',
     districtName: 'Parrucë', address: null, amenityNames: [],
   },

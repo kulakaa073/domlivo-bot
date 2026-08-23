@@ -6,7 +6,8 @@ import type {ParsedListing, ResolvedRefs, ValidationResult} from '../types.js'
 const parsed: ParsedListing = {
   facts: {
     price: {amount: 59000, currency: 'EUR', period: 'total'},
-    dealType: 'sale', areaM2: 76, bedrooms: 2, bathrooms: 1, floor: 3,
+    dealType: 'sale', areaM2: 76, bedrooms: 2,
+    rooms: null, bathrooms: 1, floor: 3,
     yearBuilt: null, propertyTypeName: 'Apartament', cityName: 'Shkodër',
     districtName: 'Parrucë', address: 'Rruga e Parrucës', amenityNames: ['Elevator'],
   },

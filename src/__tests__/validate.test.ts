@@ -3,7 +3,8 @@ import {validateFacts} from '../validate.js'
 import type {ParsedFacts} from '../types.js'
 
 const facts = (over: Partial<ParsedFacts>): ParsedFacts => ({
-  price: null, dealType: null, areaM2: null, bedrooms: null, bathrooms: null,
+  price: null, dealType: null, areaM2: null, bedrooms: null,
+    rooms: null, bathrooms: null,
   floor: null, yearBuilt: null, propertyTypeName: null, cityName: null,
   districtName: null, address: null, amenityNames: [], ...over,
 })
@@ -43,10 +44,37 @@ describe('validateFacts', () => {
   })
 
   it('flags implausible area, bedrooms, year and missing dealType', () => {
-    const r = validateFacts(facts({areaM2: 5, bedrooms: 14, yearBuilt: 1850}))
+    const r = validateFacts(facts({areaM2: 5, bedrooms: 14,
+    rooms: null, yearBuilt: 1850}))
     expect(r.warnings.some((w) => w.includes('area'))).toBe(true)
     expect(r.warnings.some((w) => w.includes('bedrooms'))).toBe(true)
     expect(r.warnings.some((w) => w.includes('year'))).toBe(true)
     expect(r.warnings.some((w) => w.includes('sale vs rent'))).toBe(true)
+  })
+})
+
+describe('rooms', () => {
+  const f = (over: Partial<ParsedFacts>): ParsedFacts => ({
+    price: null, dealType: 'sale', areaM2: null, bedrooms: null, rooms: null, bathrooms: null,
+    floor: null, yearBuilt: null, propertyTypeName: null, cityName: null,
+    districtName: null, address: null, amenityNames: [], ...over,
+  })
+
+  it('accepts a room count at or above the bedroom count', () => {
+    expect(validateFacts(f({rooms: 3, bedrooms: 2})).warnings).toEqual([])
+    expect(validateFacts(f({rooms: 1, bedrooms: 1})).warnings).toEqual([]) // a studio
+  })
+
+  it('warns when the listing contradicts itself instead of correcting it', () => {
+    const w = validateFacts(f({rooms: 2, bedrooms: 3})).warnings
+    expect(w.some((x) => x.includes('contradicts itself'))).toBe(true)
+  })
+
+  it('warns on an implausible count', () => {
+    expect(validateFacts(f({rooms: 40})).warnings.some((x) => x.includes('implausible'))).toBe(true)
+  })
+
+  it('says nothing when the listing did not state it', () => {
+    expect(validateFacts(f({bedrooms: 2})).warnings).toEqual([])
   })
 })

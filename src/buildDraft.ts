@@ -59,6 +59,7 @@ export function draftContentFields(input: DraftContentInput): Record<string, unk
   }
   if (f.areaM2 !== null) doc.area = f.areaM2
   if (f.bedrooms !== null) doc.bedrooms = f.bedrooms
+  if (f.rooms !== null) doc.rooms = f.rooms
   if (f.bathrooms !== null) doc.bathrooms = f.bathrooms
   if (f.yearBuilt !== null) doc.yearBuilt = f.yearBuilt
   if (refs.amenityIds.length > 0) {
