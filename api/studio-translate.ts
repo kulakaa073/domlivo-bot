@@ -3,11 +3,17 @@ import Anthropic from '@anthropic-ai/sdk'
 import {loadConfig} from '../src/config.js'
 import {log} from '../src/log.js'
 import {makeRedis} from '../src/redisClient.js'
-import {gateStudioRequest, maxCharsForLocales, translateFields, type TranslateItem} from '../src/studioApi.js'
+import {
+  MAX_TRANSLATE_ITEMS,
+  gateStudioRequest,
+  maxCharsForLocales,
+  translateFields,
+  type TranslateItem,
+} from '../src/studioApi.js'
 import type {AnthropicLike} from '../src/parseListing.js'
 import {validateLocales} from '../src/locales.js'
 
-const MAX_ITEMS = 40
+const MAX_ITEMS = MAX_TRANSLATE_ITEMS
 
 function applyCors(res: VercelResponse, origin: string | null): void {
   if (!origin) return

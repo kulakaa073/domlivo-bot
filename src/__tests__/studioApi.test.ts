@@ -1,5 +1,12 @@
 import {describe, it, expect} from 'vitest'
-import {allowedOrigin, gateStudioRequest, maxCharsForLocales, translateFields, type TranslateItem} from '../studioApi.js'
+import {
+  MAX_TRANSLATE_ITEMS,
+  allowedOrigin,
+  gateStudioRequest,
+  maxCharsForLocales,
+  translateFields,
+  type TranslateItem,
+} from '../studioApi.js'
 import type {RedisLike} from '../assembly.js'
 import type {AnthropicLike} from '../parseListing.js'
 
@@ -123,5 +130,15 @@ describe('maxCharsForLocales', () => {
   it('never collapses to nothing, however many locales are asked for', () => {
     expect(maxCharsForLocales(100)).toBe(1_000)
     expect(maxCharsForLocales(0)).toBe(24_000)
+  })
+})
+
+describe('MAX_TRANSLATE_ITEMS', () => {
+  it('stays at or below the size the endpoint can actually answer', () => {
+    // 40 items x 5 locales is 200 strings in one tool call and 502s every
+    // time; 30 and below succeed. This guards the number against being raised
+    // back on a hunch.
+    expect(MAX_TRANSLATE_ITEMS).toBeLessThanOrEqual(30)
+    expect(MAX_TRANSLATE_ITEMS).toBeGreaterThan(0)
   })
 })
