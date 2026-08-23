@@ -5,6 +5,8 @@ export type ParsedFacts = {
   dealType: 'sale' | 'rent' | null
   areaM2: number | null
   bedrooms: number | null
+  /** Total habitable rooms — bedrooms plus living rooms, the count behind Albanian X+1 and Russian X-комнатная. */
+  rooms: number | null
   bathrooms: number | null
   floor: number | null
   yearBuilt: number | null

@@ -45,7 +45,7 @@ const SYSTEM_PROMPT_TEMPLATE = `You are updating an EXISTING property listing dr
 Rules:
 - Extract ONLY what the reply provides. Return null (or [] for amenityNames) for every field the reply does not mention. Never guess, never repeat current values back.
 - The reply may be terse ("120000", "3 bedrooms, Durrës"). Use the missing-fields list to interpret bare values: a lone number when "price" is missing is the price; a lone small number when "bedrooms" is missing is the bedroom count.
-- Same conventions as intake: "2+1" -> bedrooms 2; lek/lekë/L means ALL; do not convert currencies; names in Latin-script Albanian.
+- Same conventions as intake: "2+1" -> bedrooms 2, rooms 3; Russian "двухкомнатная" -> rooms 2, bedrooms 1; lek/lekë/L means ALL; do not convert currencies; names in Latin-script Albanian.
 - editorial: null UNLESS the reply contains genuinely new descriptive text about the property. In that case write ONLY the changed fields (title/shortDescription/description), each in ALL of these locales: __LOCALES__.
 - parserNotes: one short sentence about anything ambiguous, else empty string.`
 
@@ -99,6 +99,7 @@ export function mergeFacts(current: ParsedFacts, upd: ParsedFacts): ParsedFacts 
     dealType: upd.dealType ?? current.dealType,
     areaM2: upd.areaM2 ?? current.areaM2,
     bedrooms: upd.bedrooms ?? current.bedrooms,
+    rooms: upd.rooms ?? current.rooms,
     bathrooms: upd.bathrooms ?? current.bathrooms,
     floor: upd.floor ?? current.floor,
     yearBuilt: upd.yearBuilt ?? current.yearBuilt,

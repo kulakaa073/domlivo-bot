@@ -34,6 +34,7 @@ export const FACTS_SCHEMA: Record<string, unknown> = {
     dealType: {anyOf: [{type: 'null'}, {enum: ['sale', 'rent']}]},
     areaM2: {type: ['number', 'null']},
     bedrooms: {type: ['integer', 'null']},
+    rooms: {type: ['integer', 'null']},
     bathrooms: {type: ['integer', 'null']},
     floor: {type: ['integer', 'null']},
     yearBuilt: {type: ['integer', 'null']},
@@ -44,7 +45,7 @@ export const FACTS_SCHEMA: Record<string, unknown> = {
     amenityNames: {type: 'array', items: {type: 'string'}},
   },
   required: [
-    'price', 'dealType', 'areaM2', 'bedrooms', 'bathrooms', 'floor', 'yearBuilt',
+    'price', 'dealType', 'areaM2', 'bedrooms', 'rooms', 'bathrooms', 'floor', 'yearBuilt',
     'propertyTypeName', 'cityName', 'districtName', 'address', 'amenityNames',
   ],
   additionalProperties: false,
@@ -86,12 +87,18 @@ const SYSTEM_PROMPT_TEMPLATE = `You parse property listing messages for DomLivo,
 Rules for facts:
 - Extract ONLY what the text states. Return null for anything not stated. Never guess or infer.
 - Albanian room notation: "2+1" means 2 bedrooms + 1 living room, so bedrooms = 2. "garsonierë"/"garsoniere"/studio means a studio apartment: bedrooms = 1 (DomLivo convention — the single living/sleeping room counts as one bedroom), propertyTypeName "Studio".
+- rooms: the TOTAL habitable rooms — bedrooms plus living rooms, never counting the kitchen or bathrooms. "2+1" is rooms 3, bedrooms 2. "1+1" is rooms 2, bedrooms 1. Russian "двухкомнатная" / Ukrainian "двокімнатна" states the room total directly: rooms 2, bedrooms 1. A studio is rooms 1, bedrooms 1. Null when the text does not say enough to know it — never derive it from the area.
 - price: report the amount and currency exactly as written (lek/lekë/L means ALL). Do NOT convert currencies. period: "per_month" for rentals quoted monthly, "per_m2" if quoted per square metre, otherwise "total".
 - cityName / districtName / propertyTypeName: the name as commonly written in Latin-script Albanian (e.g. "Shkodër", "Parrucë", "Apartament").
 - amenityNames: short English names, e.g. "Elevator", "Parking", "Balcony", "Sea view".
 
 Rules for editorial — write title, shortDescription and description in ALL of these locales: __LOCALES__:
-- title: at most 70 characters, factual, no hype. The same STRUCTURE in every locale — bedroom count, property type, district, city — dropping whatever is not known: "2-bedroom apartment in Currila, Durrës". Write each locale in ITS OWN words: translate the property type (apartment / квартира / квартира / apartament / appartamento) and use the locally common form of every place name (Durrës / Дуррес / Durazzo; Tirana / Тирана). NEVER paste the Albanian propertyTypeName or cityName from the facts into another language — those fields are for the CMS, not for the titles. Use the bedroom count from the rules above, never the room notation of the source language.
+- title: at most 70 characters, factual, no hype. The same STRUCTURE in every locale — size, property type, district, city — dropping whatever is not known. Write each locale in ITS OWN words: translate the property type (apartment / квартира / квартира / apartament / appartamento) and use the locally common form of every place name (Durrës / Дуррес / Durazzo; Tirana / Тирана). NEVER paste the Albanian propertyTypeName or cityName from the facts into another language — those fields are for the CMS, not for the titles.
+- Which number a title states depends on what the language counts, and getting this wrong misdescribes the flat:
+  · en / it — BEDROOMS: "2-bedroom apartment in Currila, Durrës", "Appartamento 2 camere a Currila, Durazzo".
+  · sq — the local notation from bedrooms + living rooms: "Apartament 2+1 në Currila, Durrës".
+  · ru / uk — ROOMS, because "комнатная"/"кімнатна" counts rooms and not bedrooms: a 2+1 is "3-комнатная квартира", a 1+1 is "2-комнатная квартира". Never render the bedroom count with that word.
+  When rooms is null, ru/uk fall back to naming bedrooms explicitly ("квартира с 1 спальней") rather than guessing a room total.
 - shortDescription: 1–2 sentences.
 - description: 80–150 words built STRICTLY from stated facts. No invented details, no superlatives about things the text does not say.
 - NEVER reproduce contact details in any editorial field — no phone numbers, e-mail addresses, links or social handles. Contacts reach the site through the agent record.

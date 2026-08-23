@@ -4,7 +4,8 @@ import type {AnthropicLike} from '../parseListing.js'
 import type {ParsedFacts} from '../types.js'
 
 const emptyFacts: ParsedFacts = {
-  price: null, dealType: null, areaM2: null, bedrooms: null, bathrooms: null,
+  price: null, dealType: null, areaM2: null, bedrooms: null,
+    rooms: null, bathrooms: null,
   floor: null, yearBuilt: null, propertyTypeName: null, cityName: null,
   districtName: null, address: null, amenityNames: [],
 }
@@ -60,7 +61,8 @@ describe('parseUpdate', () => {
 
 describe('mergeFacts', () => {
   it('non-null update fields win; others keep current values; amenities append-dedupe', () => {
-    const upd: ParsedFacts = {...emptyFacts, bedrooms: 3, cityName: 'Durrës', amenityNames: ['Elevator', 'Parking']}
+    const upd: ParsedFacts = {...emptyFacts, bedrooms: 3,
+    rooms: null, cityName: 'Durrës', amenityNames: ['Elevator', 'Parking']}
     const merged = mergeFacts(current, upd)
     expect(merged.bedrooms).toBe(3)
     expect(merged.cityName).toBe('Durrës')

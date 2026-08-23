@@ -16,6 +16,7 @@ export function fullOutcome(): {
         dealType: 'sale',
         areaM2: 78,
         bedrooms: 2,
+    rooms: null,
         bathrooms: 1,
         floor: 3,
         yearBuilt: 2019,

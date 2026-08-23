@@ -263,7 +263,7 @@ export async function handleUpdateAnswer(items: GroupItem[], deps: ReviewDeps): 
 
 function emptyFacts(): ParsedFacts {
   return {
-    price: null, dealType: null, areaM2: null, bedrooms: null, bathrooms: null, floor: null,
+    price: null, dealType: null, areaM2: null, bedrooms: null, rooms: null, bathrooms: null, floor: null,
     yearBuilt: null, propertyTypeName: null, cityName: null, districtName: null, address: null, amenityNames: [],
   }
 }

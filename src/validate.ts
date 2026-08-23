@@ -64,6 +64,15 @@ export function validateFacts(facts: ParsedFacts): ValidationResult {
   if (facts.bedrooms !== null && facts.bedrooms > 10) {
     warnings.push(`${facts.bedrooms} bedrooms looks implausible — verify`)
   }
+  // Rooms is bedrooms plus living rooms, so it can never be the smaller of the
+  // two. A listing that says otherwise is contradicting itself — the editor
+  // needs to see both numbers, not have one silently corrected.
+  if (facts.rooms !== null && (facts.rooms < 1 || facts.rooms > 20)) {
+    warnings.push(`${facts.rooms} rooms looks implausible — verify`)
+  }
+  if (facts.rooms !== null && facts.bedrooms !== null && facts.rooms < facts.bedrooms) {
+    warnings.push(`${facts.rooms} rooms but ${facts.bedrooms} bedrooms — the listing contradicts itself, check the layout`)
+  }
   const maxYear = new Date().getFullYear() + 2
   if (facts.yearBuilt !== null && (facts.yearBuilt < 1900 || facts.yearBuilt > maxYear)) {
     warnings.push(`year built ${facts.yearBuilt} looks implausible — verify`)
