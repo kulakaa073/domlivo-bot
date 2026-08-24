@@ -140,7 +140,8 @@ Rules:
 - For every input item, return ALL of the listed locales. The locale matching the given source language must be the input text unchanged.
 - Translate faithfully: no additions, no omissions, no marketing embellishment. Keep numbers, prices, area figures and proper nouns (place names in their locally common form: Durrës/Дуррес/Durazzo).
 - Preserve line breaks and paragraph structure for multi-line text.
-- Keep the register of the source (listing copy stays listing copy).`
+- Keep the register of the source (listing copy stays listing copy).
+- Some items contain inline markers like [[1]] … [[/1]]. They are STRUCTURE, not content: never translate, renumber or drop them. Reproduce every marker exactly, wrapping the words in your translation that correspond to the words they wrapped in the source. Word order may move; the markers move with the words.`
 
 export async function translateFields(
   client: AnthropicLike,
